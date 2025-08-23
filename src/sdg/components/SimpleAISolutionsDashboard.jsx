@@ -3,6 +3,9 @@ import { ArrowLeft, Lightbulb, TrendingUp, Users, Target, X } from 'lucide-react
 import { OpenRouterService } from '../../services/api/openRouterService';
 import AIPovertyTool from '../tools/AIPovertyTool';
 import SustainableFarmingTool from '../tools/SustainableFarmingTool';
+import AIHealthcareTool from '../tools/AIHealthcareTool';
+import SmartFarmingTool from '../tools/SmartFarmingTool';
+import AIWaterManagementTool from '../tools/AIWaterManagementTool';
 
 const SimpleAISolutionsDashboard = ({ onBack }) => {
   const [selectedSolution, setSelectedSolution] = useState(null);
@@ -45,8 +48,8 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
     {
       id: 2,
       sdg: 2,
-      title: 'AI for Sustainable Farming',
-      description: 'Computer vision and sensor data system to monitor crops, predict yields, and optimize resources',
+      title: 'AI-Powered Smart Farming',
+      description: 'Comprehensive soil health monitoring, crop disease detection, resource optimization, and market analysis platform',
       impact: 'High',
       difficulty: 'Medium',
       category: 'Agriculture'
@@ -211,8 +214,14 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
       setCurrentTool('ai-poverty');
       window.location.hash = '#ai-poverty-tool';
     } else if (solution.sdg === 2) {
-      setCurrentTool('sustainable-farming');
-      window.location.hash = '#sustainable-farming-tool';
+      setCurrentTool('smart-farming');
+      window.location.hash = '#smart-farming-tool';
+    } else if (solution.sdg === 3) {
+      setCurrentTool('ai-healthcare');
+      window.location.hash = '#ai-healthcare-tool';
+    } else if (solution.sdg === 6) {
+      setCurrentTool('water-management');
+      window.location.hash = '#water-management-tool';
     } else {
       alert('AI tools are currently under development. Coming soon!');
     }
@@ -257,6 +266,18 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
 
   if (currentTool === 'sustainable-farming') {
     return <SustainableFarmingTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'smart-farming') {
+    return <SmartFarmingTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'ai-healthcare') {
+    return <AIHealthcareTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'water-management') {
+    return <AIWaterManagementTool onBack={closeTool} />;
   }
 
   // Other tools temporarily disabled

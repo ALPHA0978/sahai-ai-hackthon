@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Leaf, Camera, Droplets, Thermometer, AlertTriangle, 
   CheckCircle, BarChart3, Target, ArrowLeft, Send, 
-  Loader, Bug, Beaker, Satellite, Zap
+  Loader, Bug, Beaker, Satellite, Zap, TrendingUp, DollarSign
 } from 'lucide-react';
 import { OpenRouterService } from '../../services/api/openRouterService';
 
@@ -33,10 +33,19 @@ const SustainableFarmingTool = ({ onBack }) => {
     lightIntensity: '',
     rainfall: ''
   });
+  const [marketData, setMarketData] = useState({
+    location: '',
+    farmSize: '',
+    budget: '',
+    season: '',
+    soilType: '',
+    waterAvailability: ''
+  });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [soilAnalysis, setSoilAnalysis] = useState(null);
   const [cropAnalysis, setCropAnalysis] = useState(null);
   const [monitoringResults, setMonitoringResults] = useState(null);
+  const [marketAnalysis, setMarketAnalysis] = useState(null);
 
   const analyzeSoilWithAI = async () => {
     setIsAnalyzing(true);
@@ -224,6 +233,89 @@ const SustainableFarmingTool = ({ onBack }) => {
     }
   };
 
+  const analyzeMarketWithAI = async () => {
+    setIsAnalyzing(true);
+    
+    try {
+      const systemPrompt = `You are an AI agricultural market analyst. Analyze market data and provide profitable crop recommendations as JSON:
+      {
+        "marketTrends": {
+          "highDemand": [
+            {
+              "crop": "crop name",
+              "currentPrice": "price per kg/quintal",
+              "demandGrowth": "percentage growth",
+              "reason": "why demand is high",
+              "profitPotential": "High|Medium|Low"
+            }
+          ],
+          "emergingOpportunities": [
+            {
+              "crop": "crop name",
+              "marketGap": "supply shortage description",
+              "priceProjection": "expected price trend",
+              "timeframe": "when to plant/harvest"
+            }
+          ]
+        },
+        "recommendations": {
+          "topCrops": [
+            {
+              "crop": "crop name",
+              "profitMargin": "expected profit percentage",
+              "investmentRequired": "initial investment needed",
+              "riskLevel": "Low|Medium|High",
+              "harvestTime": "months to harvest",
+              "marketDemand": "current demand status",
+              "suitability": "why suitable for farmer's conditions"
+            }
+          ],
+          "seasonalStrategy": "seasonal planting strategy",
+          "diversificationTips": ["diversification suggestions"]
+        },
+        "marketInsights": {
+          "supplyShortages": ["crops with supply shortages"],
+          "priceVolatility": ["crops with stable prices"],
+          "exportOpportunities": ["crops with export potential"],
+          "localDemand": ["crops in high local demand"]
+        },
+        "riskAnalysis": {
+          "weatherRisks": "weather-related risks",
+          "marketRisks": "market-related risks",
+          "mitigation": ["risk mitigation strategies"]
+        },
+        "timeline": {
+          "immediate": "what to plant now",
+          "nextSeason": "next season recommendations",
+          "longTerm": "long-term strategy"
+        }
+      }`;
+
+      const prompt = `Analyze market conditions and provide profitable crop recommendations:
+      Location: ${marketData.location}
+      Farm Size: ${marketData.farmSize} acres
+      Budget: ₹${marketData.budget}
+      Season: ${marketData.season}
+      Soil Type: ${marketData.soilType}
+      Water Availability: ${marketData.waterAvailability}
+      
+      Based on current market trends, supply-demand analysis, recent food shortages, and companies increasing procurement, recommend the most profitable crops to grow. Consider local market conditions, export opportunities, and seasonal demand patterns.`;
+
+      const response = await OpenRouterService.callAPI(prompt, systemPrompt);
+      const analysis = OpenRouterService.parseJSON(response);
+      setMarketAnalysis(analysis);
+      
+    } catch (error) {
+      console.error('Market analysis error:', error);
+      setMarketAnalysis({
+        error: 'AI market analysis failed. Please check your data and try again.',
+        marketTrends: null
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -260,7 +352,8 @@ const SustainableFarmingTool = ({ onBack }) => {
           {[
             { id: 'soil', label: 'Soil Analysis', icon: <Beaker size={16} /> },
             { id: 'crop', label: 'Crop Health', icon: <Camera size={16} /> },
-            { id: 'monitoring', label: 'Real-time Monitoring', icon: <Satellite size={16} /> }
+            { id: 'monitoring', label: 'Real-time Monitoring', icon: <Satellite size={16} /> },
+            { id: 'market', label: 'Market Intelligence', icon: <TrendingUp size={16} /> }
           ].map(tab => (
             <button
               key={tab.id}
@@ -908,6 +1001,283 @@ const SustainableFarmingTool = ({ onBack }) => {
                 <div className="text-center py-12 text-gray-500">
                   <Satellite className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>Enter IoT sensor data to get real-time AI monitoring insights</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Market Intelligence Tab */}
+        {activeTab === 'market' && (
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Market Data Input */}
+            <div className="bg-white rounded-lg border p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Market Analysis Input</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Location (State/District)</label>
+                  <input
+                    type="text"
+                    value={marketData.location}
+                    onChange={(e) => setMarketData(prev => ({...prev, location: e.target.value}))}
+                    placeholder="e.g., Punjab, Maharashtra, Karnataka"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Farm Size (acres)</label>
+                  <input
+                    type="text"
+                    value={marketData.farmSize}
+                    onChange={(e) => setMarketData(prev => ({...prev, farmSize: e.target.value}))}
+                    placeholder="5"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Available Budget (₹)</label>
+                  <input
+                    type="text"
+                    value={marketData.budget}
+                    onChange={(e) => setMarketData(prev => ({...prev, budget: e.target.value}))}
+                    placeholder="50000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Season</label>
+                  <select
+                    value={marketData.season}
+                    onChange={(e) => setMarketData(prev => ({...prev, season: e.target.value}))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Select Season</option>
+                    <option value="Kharif">Kharif (Monsoon)</option>
+                    <option value="Rabi">Rabi (Winter)</option>
+                    <option value="Zaid">Zaid (Summer)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Soil Type</label>
+                  <select
+                    value={marketData.soilType}
+                    onChange={(e) => setMarketData(prev => ({...prev, soilType: e.target.value}))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Select Soil Type</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Black Cotton">Black Cotton</option>
+                    <option value="Red">Red Soil</option>
+                    <option value="Laterite">Laterite</option>
+                    <option value="Sandy">Sandy</option>
+                    <option value="Clay">Clay</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Water Availability</label>
+                  <select
+                    value={marketData.waterAvailability}
+                    onChange={(e) => setMarketData(prev => ({...prev, waterAvailability: e.target.value}))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Select Water Source</option>
+                    <option value="Irrigated">Well Irrigated</option>
+                    <option value="Canal">Canal Irrigation</option>
+                    <option value="Rainfed">Rainfed</option>
+                    <option value="Drip">Drip Irrigation</option>
+                    <option value="Limited">Limited Water</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={analyzeMarketWithAI}
+                  disabled={!marketData.location || isAnalyzing}
+                  className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin" />
+                      <span>AI Analyzing Market...</span>
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="w-5 h-5" />
+                      <span>Get Profit Recommendations</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Market Analysis Results */}
+            <div className="bg-white rounded-lg border p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">AI Market Intelligence</h3>
+              
+              {isAnalyzing && (
+                <div className="text-center py-12">
+                  <TrendingUp className="w-12 h-12 text-green-600 animate-pulse mx-auto mb-4" />
+                  <p className="text-gray-600">AI is analyzing market trends and supply-demand...</p>
+                </div>
+              )}
+
+              {marketAnalysis && !isAnalyzing && (
+                <div className="space-y-6">
+                  {marketAnalysis.error ? (
+                    <div className="text-center py-8">
+                      <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                      <p className="text-red-600">{marketAnalysis.error}</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Top Profitable Crops */}
+                      {marketAnalysis.recommendations?.topCrops && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                            <DollarSign className="w-5 h-5 text-green-600 mr-2" />
+                            Most Profitable Crops
+                          </h4>
+                          {marketAnalysis.recommendations.topCrops.slice(0, 3).map((crop, index) => (
+                            <div key={index} className="p-4 bg-green-50 rounded-lg mb-3 border-l-4 border-green-500">
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="font-semibold text-green-800">{crop.crop}</h5>
+                                <span className="text-lg font-bold text-green-700">{crop.profitMargin}</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                                <div>
+                                  <span className="text-gray-600">Investment: </span>
+                                  <span className="font-medium">{crop.investmentRequired}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Risk: </span>
+                                  <span className={`font-medium ${
+                                    crop.riskLevel === 'Low' ? 'text-green-600' :
+                                    crop.riskLevel === 'Medium' ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>{crop.riskLevel}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Harvest: </span>
+                                  <span className="font-medium">{crop.harvestTime}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Demand: </span>
+                                  <span className="font-medium text-blue-600">{crop.marketDemand}</span>
+                                </div>
+                              </div>
+                              <p className="text-sm text-green-700">
+                                <strong>Why suitable:</strong> {crop.suitability}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* High Demand Crops */}
+                      {marketAnalysis.marketTrends?.highDemand && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                            <BarChart3 className="w-5 h-5 text-blue-600 mr-2" />
+                            High Demand Crops
+                          </h4>
+                          {marketAnalysis.marketTrends.highDemand.slice(0, 3).map((crop, index) => (
+                            <div key={index} className="p-3 bg-blue-50 rounded-lg mb-2">
+                              <div className="flex justify-between items-start mb-1">
+                                <h5 className="font-medium text-blue-800">{crop.crop}</h5>
+                                <span className="text-sm font-semibold text-blue-700">{crop.currentPrice}</span>
+                              </div>
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-blue-600">Growth: {crop.demandGrowth}</span>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  crop.profitPotential === 'High' ? 'bg-green-200 text-green-700' :
+                                  crop.profitPotential === 'Medium' ? 'bg-yellow-200 text-yellow-700' : 'bg-gray-200 text-gray-700'
+                                }`}>
+                                  {crop.profitPotential} Profit
+                                </span>
+                              </div>
+                              <p className="text-sm text-blue-700">{crop.reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Market Insights */}
+                      {marketAnalysis.marketInsights && (
+                        <div className="grid grid-cols-2 gap-4">
+                          {marketAnalysis.marketInsights.supplyShortages && (
+                            <div className="p-3 bg-red-50 rounded-lg">
+                              <h5 className="font-medium text-red-800 mb-2">🚨 Supply Shortages</h5>
+                              <ul className="space-y-1">
+                                {marketAnalysis.marketInsights.supplyShortages.slice(0, 3).map((crop, index) => (
+                                  <li key={index} className="text-sm text-red-700">• {crop}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {marketAnalysis.marketInsights.exportOpportunities && (
+                            <div className="p-3 bg-purple-50 rounded-lg">
+                              <h5 className="font-medium text-purple-800 mb-2">🌍 Export Potential</h5>
+                              <ul className="space-y-1">
+                                {marketAnalysis.marketInsights.exportOpportunities.slice(0, 3).map((crop, index) => (
+                                  <li key={index} className="text-sm text-purple-700">• {crop}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Timeline Strategy */}
+                      {marketAnalysis.timeline && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-gray-900">📅 Planting Timeline</h4>
+                          
+                          {marketAnalysis.timeline.immediate && (
+                            <div className="p-3 bg-orange-50 rounded-lg">
+                              <h5 className="font-medium text-orange-800 mb-2">🚀 Plant Now</h5>
+                              <p className="text-sm text-orange-700">{marketAnalysis.timeline.immediate}</p>
+                            </div>
+                          )}
+
+                          {marketAnalysis.timeline.nextSeason && (
+                            <div className="p-3 bg-indigo-50 rounded-lg">
+                              <h5 className="font-medium text-indigo-800 mb-2">📈 Next Season</h5>
+                              <p className="text-sm text-indigo-700">{marketAnalysis.timeline.nextSeason}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Risk Analysis */}
+                      {marketAnalysis.riskAnalysis && (
+                        <div className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                          <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Risk Assessment</h4>
+                          {marketAnalysis.riskAnalysis.marketRisks && (
+                            <p className="text-sm text-yellow-700 mb-2">
+                              <strong>Market Risks:</strong> {marketAnalysis.riskAnalysis.marketRisks}
+                            </p>
+                          )}
+                          {marketAnalysis.riskAnalysis.mitigation && (
+                            <div>
+                              <strong className="text-yellow-800">Mitigation:</strong>
+                              <ul className="mt-1 space-y-1">
+                                {marketAnalysis.riskAnalysis.mitigation.slice(0, 3).map((strategy, index) => (
+                                  <li key={index} className="text-sm text-yellow-700">• {strategy}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {!marketAnalysis && !isAnalyzing && (
+                <div className="text-center py-12 text-gray-500">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Enter your farm details to get AI-powered market intelligence and profit recommendations</p>
                 </div>
               )}
             </div>
