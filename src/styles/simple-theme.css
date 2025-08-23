@@ -134,6 +134,11 @@ body {
   animation: slideUp 0.4s ease-out;
 }
 
+/* Input styles */
+input, textarea, select {
+  color: #111827 !important;
+}
+
 /* Focus styles */
 *:focus {
   outline: 2px solid var(--primary);

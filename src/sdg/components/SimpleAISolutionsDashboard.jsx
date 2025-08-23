@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Lightbulb, TrendingUp, Users, Target, X } from 'lucide-react';
 import { OpenRouterService } from '../../services/api/openRouterService';
+import AIPovertyTool from '../tools/AIPovertyTool';
+import SustainableFarmingTool from '../tools/SustainableFarmingTool';
 
 const SimpleAISolutionsDashboard = ({ onBack }) => {
   const [selectedSolution, setSelectedSolution] = useState(null);
@@ -205,7 +207,15 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
   };
 
   const handleOpenTool = (solution) => {
-    alert('AI tools are currently under development. Coming soon!');
+    if (solution.sdg === 1) {
+      setCurrentTool('ai-poverty');
+      window.location.hash = '#ai-poverty-tool';
+    } else if (solution.sdg === 2) {
+      setCurrentTool('sustainable-farming');
+      window.location.hash = '#sustainable-farming-tool';
+    } else {
+      alert('AI tools are currently under development. Coming soon!');
+    }
   };
 
   const handleLearnMore = async (solution) => {
@@ -241,7 +251,15 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
     window.location.hash = '';
   };
 
-  // Tools temporarily disabled
+  if (currentTool === 'ai-poverty') {
+    return <AIPovertyTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'sustainable-farming') {
+    return <SustainableFarmingTool onBack={closeTool} />;
+  }
+
+  // Other tools temporarily disabled
 
   return (
     <div className="min-h-screen py-20 bg-gray-50">
