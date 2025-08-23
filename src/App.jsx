@@ -92,11 +92,16 @@ function AppContent() {
         await DataService.logUserAction(user.uid, 'profile_analyzed', { profile });
       }
       
-      let foundSchemes;
+      console.log('🔍 Finding schemes for profile:', profile);
+      const foundSchemes = await OpenRouterService.findSchemes(profile);
+      console.log('✅ AI returned schemes:', foundSchemes?.length || 0, 'schemes');
       
-      foundSchemes = await OpenRouterService.findSchemes(profile);
-      
-      setSchemes(foundSchemes);
+      if (foundSchemes && foundSchemes.length > 0) {
+        setSchemes(foundSchemes);
+        console.log('📋 Schemes set in state:', foundSchemes);
+      } else {
+        console.log('⚠️ No schemes found, keeping existing schemes');
+      }
       
       // Cache schemes if user is logged in
       if (user && foundSchemes?.length > 0) {
@@ -104,7 +109,9 @@ function AppContent() {
       }
       
       // Save to localStorage for offline access
-      DataService.saveToLocalStorage('last_schemes', foundSchemes);
+      if (foundSchemes?.length > 0) {
+        DataService.saveToLocalStorage('last_schemes', foundSchemes);
+      }
       
     } catch (error) {
       console.error('Error fetching schemes:', error);
@@ -151,7 +158,6 @@ function AppContent() {
           userProfile={userProfile} 
           schemes={schemes} 
           isLoading={isLoadingSchemes}
-          error={error}
         />
         <SimpleCTASection />
       </main>

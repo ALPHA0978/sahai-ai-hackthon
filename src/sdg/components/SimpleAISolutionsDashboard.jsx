@@ -6,6 +6,9 @@ import SustainableFarmingTool from '../tools/SustainableFarmingTool';
 import AIHealthcareTool from '../tools/AIHealthcareTool';
 import SmartFarmingTool from '../tools/SmartFarmingTool';
 import AIWaterManagementTool from '../tools/AIWaterManagementTool';
+import AIInclusiveEducationTool from '../tools/AIInclusiveEducationTool';
+import AIJobMatchingTool from '../tools/AIJobMatchingTool';
+import AIInfrastructureTool from '../tools/AIInfrastructureTool';
 
 const SimpleAISolutionsDashboard = ({ onBack }) => {
   const [selectedSolution, setSelectedSolution] = useState(null);
@@ -219,9 +222,18 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
     } else if (solution.sdg === 3) {
       setCurrentTool('ai-healthcare');
       window.location.hash = '#ai-healthcare-tool';
+    } else if (solution.sdg === 4) {
+      setCurrentTool('ai-education');
+      window.location.hash = '#ai-education-tool';
     } else if (solution.sdg === 6) {
       setCurrentTool('water-management');
       window.location.hash = '#water-management-tool';
+    } else if (solution.sdg === 8) {
+      setCurrentTool('ai-jobs');
+      window.location.hash = '#ai-jobs-tool';
+    } else if (solution.sdg === 9) {
+      setCurrentTool('ai-infrastructure');
+      window.location.hash = '#ai-infrastructure-tool';
     } else {
       alert('AI tools are currently under development. Coming soon!');
     }
@@ -278,6 +290,18 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
 
   if (currentTool === 'water-management') {
     return <AIWaterManagementTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'ai-education') {
+    return <AIInclusiveEducationTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'ai-jobs') {
+    return <AIJobMatchingTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'ai-infrastructure') {
+    return <AIInfrastructureTool onBack={closeTool} />;
   }
 
   // Other tools temporarily disabled

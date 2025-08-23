@@ -105,23 +105,7 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                       </div>
                     </div>
                     
-                    {scheme.eligibilityReason && (
-                      <div className={`p-4 rounded-lg mb-4 ${
-                        scheme.isEligible ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200'
-                      }`}>
-                        <div className="flex items-start space-x-3">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            scheme.isEligible ? 'bg-blue-600' : 'bg-gray-600'
-                          }`}>
-                            <span className="text-white text-xs">AI</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900 mb-1">Eligibility Analysis</p>
-                            <p className="text-sm text-gray-600">{scheme.eligibilityReason}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+
                     
                     <div className="flex flex-col sm:flex-row gap-3">
                       <button 

@@ -37,6 +37,12 @@ const SimpleSDGDashboard = ({ onNavigateToTool }) => {
       category: 'Analysis'
     },
     {
+      id: 'inclusive-education',
+      title: 'Inclusive Education',
+      description: 'AI-powered personalized learning and accessibility tools',
+      category: 'Education'
+    },
+    {
       id: 'personalized-suggestions',
       title: 'Personal Suggestions',
       description: 'Get personalized SDG recommendations',
@@ -47,12 +53,6 @@ const SimpleSDGDashboard = ({ onNavigateToTool }) => {
       title: 'AI Assistant',
       description: 'Chat with our SDG AI assistant',
       category: 'Support'
-    },
-    {
-      id: 'impact-tracker',
-      title: 'Impact Tracker',
-      description: 'Track and measure your SDG impact',
-      category: 'Analytics'
     }
   ];
 

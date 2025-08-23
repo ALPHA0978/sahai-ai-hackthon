@@ -3,6 +3,7 @@ import SimpleSDGDashboard from './components/SimpleSDGDashboard';
 import SimpleAISolutionsDashboard from './components/SimpleAISolutionsDashboard';
 import SimplePersonalizedSuggestions from './pages/SimplePersonalizedSuggestions';
 import SimpleAIAssistant from './components/SimpleAIAssistant';
+import AIInclusiveEducationTool from './tools/AIInclusiveEducationTool';
 
 const SimpleSDGPlatform = ({ onBack }) => {
   const [currentTool, setCurrentTool] = useState('dashboard');
@@ -25,6 +26,8 @@ const SimpleSDGPlatform = ({ onBack }) => {
         return <SimplePersonalizedSuggestions onBack={handleBackToDashboard} />;
       case 'ai-assistant':
         return <SimpleAIAssistant onBack={handleBackToDashboard} />;
+      case 'inclusive-education':
+        return <AIInclusiveEducationTool onBack={handleBackToDashboard} />;
       default:
         return <SimpleSDGDashboard onNavigateToTool={handleNavigateToTool} />;
     }
