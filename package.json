@@ -7,29 +7,33 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:functions": "cd functions && npm run build",
+    "deploy": "npm run build && firebase deploy",
+    "serve": "firebase serve"
   },
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "firebase": "^10.7.1",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.263.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "react-dropzone": "^14.2.3",
-    "tesseract.js": "^5.0.0",
-    "firebase": "^10.7.1"
+    "react-hot-toast": "^2.4.1",
+    "tesseract.js": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
-    "tailwindcss": "^3.4.0",
     "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
     "vite": "^7.1.2"
   }
 }
