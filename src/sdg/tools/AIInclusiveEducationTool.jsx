@@ -437,7 +437,7 @@ const AIInclusiveEducationTool = ({ onBack }) => {
         <div className="mt-6">
           <h4 className="font-semibold mb-3 text-gray-900">Recommended Learning Path</h4>
           <div className="space-y-3">
-            {(aiLessons.length > 0 ? aiLessons : [{
+            {(aiLessons && aiLessons.length > 0 ? aiLessons : [{
               id: 1,
               title: 'Complete your profile to see personalized lessons',
               subject: 'General',

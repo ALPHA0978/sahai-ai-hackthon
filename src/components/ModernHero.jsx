@@ -76,7 +76,7 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center bg-gray-50">
+    <section className="relative min-h-screen flex items-center bg-gray-50 pt-20 md:pt-16">
 
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
