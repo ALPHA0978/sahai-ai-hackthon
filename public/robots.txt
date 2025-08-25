@@ -1,0 +1,79 @@
+# Robots.txt for Sahai.ai - Government Scheme Discovery Platform
+# https://sahai.ai
+
+User-agent: *
+Allow: /
+
+# Allow all search engines to crawl the main content
+Allow: /schemes
+Allow: /sdg
+Allow: /about
+Allow: /contact
+Allow: /help
+
+# Disallow sensitive areas
+Disallow: /admin
+Disallow: /api/
+Disallow: /auth/
+Disallow: /login
+Disallow: /signup
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /user/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*.env$
+
+# Disallow temporary and development files
+Disallow: /temp/
+Disallow: /tmp/
+Disallow: /dev/
+Disallow: /test/
+Disallow: /.git/
+Disallow: /node_modules/
+Disallow: /build/
+Disallow: /dist/
+
+# Allow important static assets
+Allow: /assets/
+Allow: /images/
+Allow: /css/
+Allow: /js/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.gif
+Allow: /*.svg
+Allow: /*.ico
+Allow: /*.webp
+
+# Crawl delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemap location (add when available)
+# Sitemap: https://sahai.ai/sitemap.xml
+
+# Special instructions for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+# Block aggressive crawlers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
