@@ -118,6 +118,22 @@ export class OpenRouterService {
     return FarmerAI.getMarketPrices(crops, location);
   }
 
+  static async analyzeSoil(soilSample) {
+    return FarmerAI.analyzeSoil(soilSample);
+  }
+
+  static async planFarmBudget(farmData) {
+    return FarmerAI.planFarmBudget(farmData);
+  }
+
+  static async detectPlantDisease(imageDescription) {
+    return FarmerAI.detectPlantDisease(imageDescription);
+  }
+
+  static async optimizeIrrigation(farmData) {
+    return FarmerAI.optimizeIrrigation(farmData);
+  }
+
   // Delegate to HealthcareAI
   static async analyzeSymptoms(symptoms) {
     return HealthcareAI.analyzeSymptoms(symptoms);
@@ -152,6 +168,82 @@ export class OpenRouterService {
 
   static async suggestSustainablePractices(currentPractices) {
     return SustainableAI.suggestPractices(currentPractices);
+  }
+
+  // Delegate to EmpowermentAI
+  static async analyzeEmpowermentNeeds(userData) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.analyzeEmpowermentNeeds(userData);
+  }
+
+  static async suggestEmpowermentPrograms(userProfile) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.suggestEmpowermentPrograms(userProfile);
+  }
+
+  static async createEmpowermentActionPlan(empowermentData) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.createActionPlan(empowermentData);
+  }
+
+  static async analyzeEmpowermentSkillGaps(currentSkills, targetGoals) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.analyzeSkillGaps(currentSkills, targetGoals);
+  }
+
+  static async suggestEmpowermentMentorship(userProfile) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.suggestMentorship(userProfile);
+  }
+
+  static async trackEmpowermentProgress(initialAssessment, currentStatus) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.trackProgress(initialAssessment, currentStatus);
+  }
+
+  static async detectGenderBias(text, type) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.detectBias(text, type);
+  }
+
+  static async processAnonymousReport(reportData) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.processReport(reportData);
+  }
+
+  static async analyzePayEquity(salaryData) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.analyzePayEquity(salaryData);
+  }
+
+  static async assessPersonalSafety(locationData, userProfile) {
+    const { EmpowermentAI } = await import('../ai/empowermentAI.js');
+    return EmpowermentAI.assessSafety(locationData, userProfile);
+  }
+
+  // Additional FarmerAI methods for market intelligence
+  static async analyzeMarketConditions(location, season, soilType) {
+    return FarmerAI.analyzeMarketConditions(location, season, soilType);
+  }
+
+  static async suggestCropsBasedOnMarket(marketConditions, location, soilType, budget) {
+    return FarmerAI.suggestCropsBasedOnMarket(marketConditions, location, soilType, budget);
+  }
+
+  static async analyzeGrowthTimeline(crops, season) {
+    return FarmerAI.analyzeGrowthTimeline(crops, season);
+  }
+
+  static async getFutureValueProjections(crops, timelineData, location) {
+    return FarmerAI.getFutureValueProjections(crops, timelineData, location);
+  }
+
+  static async analyzeCorporateProcurement(crops, location) {
+    return FarmerAI.analyzeCorporateProcurement(crops, location);
+  }
+
+  static async analyzeRegionalGaps(crops, location) {
+    return FarmerAI.analyzeRegionalGaps(crops, location);
   }
 
   // Legacy method support

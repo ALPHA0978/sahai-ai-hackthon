@@ -3,8 +3,8 @@ import { ArrowLeft, Lightbulb, TrendingUp, Users, Target, X } from 'lucide-react
 import { OpenRouterService } from '../../services/api/openRouterService';
 import AIPovertyTool from '../tools/AIPovertyTool';
 import SustainableFarmingTool from '../tools/SustainableFarmingTool';
+import EmpowermentTool from '../tools/AIEmpowermentTool';
 import AIHealthcareTool from '../tools/AIHealthcareTool';
-import SmartFarmingTool from '../tools/SmartFarmingTool';
 import AIWaterManagementTool from '../tools/AIWaterManagementTool';
 import AIInclusiveEducationTool from '../tools/AIInclusiveEducationTool';
 import AIJobMatchingTool from '../tools/AIJobMatchingTool';
@@ -225,6 +225,9 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
     } else if (solution.sdg === 4) {
       setCurrentTool('ai-education');
       window.location.hash = '#ai-education-tool';
+    } else if (solution.sdg === 5) {
+      setCurrentTool('empowerment');
+      window.location.hash = '#empowerment-tool';
     } else if (solution.sdg === 6) {
       setCurrentTool('water-management');
       window.location.hash = '#water-management-tool';
@@ -281,7 +284,7 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
   }
 
   if (currentTool === 'smart-farming') {
-    return <SmartFarmingTool onBack={closeTool} />;
+    return <SustainableFarmingTool onBack={closeTool} />;
   }
 
   if (currentTool === 'ai-healthcare') {
@@ -302,6 +305,10 @@ const SimpleAISolutionsDashboard = ({ onBack }) => {
 
   if (currentTool === 'ai-infrastructure') {
     return <AIInfrastructureTool onBack={closeTool} />;
+  }
+
+  if (currentTool === 'empowerment') {
+    return <EmpowermentTool onBack={closeTool} />;
   }
 
   // Other tools temporarily disabled

@@ -37,7 +37,7 @@ const SimpleSDGPlatform = ({ onBack }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Back Button */}
       {currentTool === 'dashboard' && (
-        <div className="fixed top-20 left-4 z-40">
+        <div className="p-4">
           <button
             onClick={onBack}
             className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
@@ -47,7 +47,9 @@ const SimpleSDGPlatform = ({ onBack }) => {
         </div>
       )}
 
-      {renderCurrentTool()}
+      <div className={currentTool === 'dashboard' ? '' : 'pt-0'}>
+        {renderCurrentTool()}
+      </div>
     </div>
   );
 };
