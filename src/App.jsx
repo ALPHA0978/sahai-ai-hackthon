@@ -11,6 +11,7 @@ import { DataService } from './services/dataService';
 import { useAuth } from './auth';
 import { AuthProvider } from './auth';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import './styles/simple-theme.css';
 import './App.css';
 
@@ -22,6 +23,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState('main'); // 'main' or 'sdg'
   const uploadSectionRef = useRef(null);
   const { user } = useAuth();
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -41,7 +43,7 @@ function AppContent() {
     try {
       // Always fetch fresh schemes from AI
       console.log('Fetching popular schemes from AI...');
-      const popularSchemes = await OpenRouterService.getPopularSchemes();
+      const popularSchemes = await OpenRouterService.getPopularSchemes(i18n.language);
       
       if (popularSchemes?.length > 0) {
         setSchemes(popularSchemes);
@@ -93,7 +95,7 @@ function AppContent() {
       }
       
       console.log('🔍 Finding schemes for profile:', profile);
-      const foundSchemes = await OpenRouterService.findSchemes(profile);
+      const foundSchemes = await OpenRouterService.findSchemes(profile, i18n.language);
       console.log('✅ AI returned schemes:', foundSchemes?.length || 0, 'schemes');
       
       if (foundSchemes && foundSchemes.length > 0) {

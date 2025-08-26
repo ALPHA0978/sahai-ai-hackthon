@@ -7,17 +7,22 @@ import {
 import { useAuth } from '../auth';
 import { LoginPage } from '../auth';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { DataService } from '../services/dataService';
 
 const ModernHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [language, setLanguage] = useState('EN');
   const [showLoginPage, setShowLoginPage] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { t, i18n } = useTranslation();
+  
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -70,8 +75,8 @@ const ModernHeader = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <span className="font-bold text-lg text-white">S</span>
+              <div className="w-10 h-10 rounded-lg bg-blue-600/25 flex items-center justify-center">
+                <img src="/vite.png" alt="Logo" width={40} height={40} className="text-white" />
               </div>
               <div>
                 <span className="font-bold text-xl text-blue-600">
@@ -90,18 +95,18 @@ const ModernHeader = () => {
                 <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search schemes..."
+                  placeholder={t('searchPlaceholder')}
                   className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 w-64 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
 
               {/* Language Selector */}
               <button
-                onClick={() => setLanguage(language === 'EN' ? 'HI' : 'EN')}
+                onClick={() => changeLanguage(i18n.language === 'en' ? 'hi' : 'en')}
                 className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Globe size={16} />
-                <span className="text-sm font-medium">{language}</span>
+                <span className="text-sm font-medium">{i18n.language.toUpperCase()}</span>
                 <ChevronDown size={14} />
               </button>
 
@@ -158,14 +163,14 @@ const ModernHeader = () => {
                         <div className="p-2">
                           <button className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700">
                             <Settings size={16} />
-                            <span>Settings</span>
+                            <span>{t('settings')}</span>
                           </button>
                           <button 
                             onClick={handleLogout}
                             className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                           >
                             <LogOut size={16} />
-                            <span>Logout</span>
+                            <span>{t('logout')}</span>
                           </button>
                         </div>
                       </div>
@@ -178,7 +183,7 @@ const ModernHeader = () => {
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                 >
                   <User size={16} />
-                  <span>Login</span>
+                  <span>{t('login')}</span>
                 </button>
               )}
             </div>
@@ -229,11 +234,11 @@ const ModernHeader = () => {
                 {/* Mobile Actions */}
                 <div className="flex items-center justify-between">
                   <button
-                    onClick={() => setLanguage(language === 'EN' ? 'HI' : 'EN')}
+                    onClick={() => changeLanguage(i18n.language === 'en' ? 'hi' : 'en')}
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg btn-secondary"
                   >
                     <Globe size={16} />
-                    <span>{language}</span>
+                    <span>{i18n.language.toUpperCase()}</span>
                   </button>
 
                   <button
@@ -252,7 +257,7 @@ const ModernHeader = () => {
                       className="btn btn-primary"
                     >
                       <User size={16} />
-                      <span>Login</span>
+                      <span>{t('login')}</span>
                     </button>
                   )}
                 </div>
@@ -288,7 +293,7 @@ const ModernHeader = () => {
                       className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       <LogOut size={16} />
-                      <span>Logout</span>
+                      <span>{t('logout')}</span>
                     </button>
                   </div>
                 )}

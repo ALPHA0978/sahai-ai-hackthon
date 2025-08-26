@@ -1,6 +1,8 @@
 import { Mail, Phone, MapPin, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const SimpleFooter = () => {
+  const { t } = useTranslation();
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -8,12 +10,12 @@ const SimpleFooter = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="font-bold text-lg text-white">S</span>
-              </div>
+              
               <div>
-                <span className="font-bold text-xl text-white">Sahai.ai</span>
-                <div className="text-xs text-blue-400">Government Schemes Platform</div>
+                <div className="w-10 h-10 rounded-lg bg-blue-600/25 flex items-center justify-center">
+                <img src="/vite.png" alt="Logo" width={40} height={40} className="text-white" />
+              </div>
+                <div className="text-xs text-blue-400">Government Schemes + AI Platform</div>
               </div>
             </div>
             <p className="text-gray-300 text-sm max-w-sm">
@@ -125,7 +127,7 @@ const SimpleFooter = () => {
                 © 2024 Sahai.ai. All rights reserved.
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                Made with ❤️ for India
+                {t('madeWithLove')}
               </p>
             </div>
             

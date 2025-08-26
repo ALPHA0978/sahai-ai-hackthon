@@ -11,8 +11,10 @@ import { OpenRouterService } from '../services/api/openRouterService';
 import { DataService } from '../services/dataService';
 // Voice functionality temporarily disabled - speechService removed
 import { useAuth } from '../auth';
+import { useTranslation } from 'react-i18next';
 
 const ModernUploadSection = ({ onSchemesFound }) => {
+  const { t, i18n } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -58,7 +60,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
 
       updateProgress('Analyzing document with AI...', 60);
       
-      const userProfile = await OpenRouterService.analyzeDocument(extractedText);
+      const userProfile = await OpenRouterService.analyzeDocument(extractedText, i18n.language);
       
       if (!userProfile) {
         throw new Error('Could not extract profile information from document');
@@ -126,7 +128,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
     try {
       updateProgress('Analyzing text input...', 30);
       
-      const userProfile = await OpenRouterService.analyzeDocument(textInput);
+      const userProfile = await OpenRouterService.analyzeDocument(textInput, i18n.language);
       
       if (!userProfile) {
         throw new Error('Could not extract profile information from text');
@@ -175,16 +177,15 @@ const ModernUploadSection = ({ onSchemesFound }) => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 mb-4">
             <Zap size={14} />
-            <span className="text-sm font-medium">AI-Powered Analysis</span>
+            <span className="text-sm font-medium">{t('advancedAI')}</span>
           </div>
           
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Upload & Discover Your Benefits
+            {t('intelligentAnalysis')}
           </h2>
           
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Upload documents, take photos, speak naturally, or type manually. 
-            Our AI analyzes everything to find schemes you're eligible for.
+            {t('uploadDescription')}
           </p>
         </div>
 
@@ -250,10 +251,10 @@ const ModernUploadSection = ({ onSchemesFound }) => {
                 
                 <div>
                   <p className="text-lg font-semibold text-gray-900 mb-2">
-                    {isDragActive ? 'Drop your files here!' : 'Drag & Drop Documents'}
+                    {isDragActive ? t('dragDrop') : t('dragDrop')}
                   </p>
                   <p className="text-sm text-gray-600">
-                    or click to browse • Supports PDF, JPG, PNG • Max 10MB
+                    {t('clickBrowse')}
                   </p>
                 </div>
 
@@ -293,10 +294,10 @@ const ModernUploadSection = ({ onSchemesFound }) => {
               <Camera className="w-6 h-6 text-white" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">
-              Take Photo
+              {t('takePhoto')}
             </h3>
             <p className="text-sm text-gray-600">
-              Capture documents with your camera
+              {t('takePhotoDesc')}
             </p>
           </button>
           
@@ -313,10 +314,10 @@ const ModernUploadSection = ({ onSchemesFound }) => {
               <Mic className="w-6 h-6 text-white" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">
-              {isRecording ? 'Recording...' : 'Voice Input'}
+              {isRecording ? 'Recording...' : t('voiceInput')}
             </h3>
             <p className="text-sm text-gray-600">
-              {isRecording ? 'Click to stop recording' : 'Speak your details'}
+              {isRecording ? 'Click to stop recording' : t('voiceInputDesc')}
             </p>
           </button>
           
@@ -329,10 +330,10 @@ const ModernUploadSection = ({ onSchemesFound }) => {
               <FileText className="w-6 h-6 text-white" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">
-              Type Details
+              {t('typeDetails')}
             </h3>
             <p className="text-sm text-gray-600">
-              Manually enter your information
+              {t('typeDetailsDesc')}
             </p>
           </button>
         </div>
@@ -407,12 +408,12 @@ const ModernUploadSection = ({ onSchemesFound }) => {
           )}
         </AnimatePresence>
 
-        {/* Simple Processing Stats */}
+        {/* AI Capabilities Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           {[
-            { icon: <Clock className="w-6 h-6" />, value: '<30s', label: 'Processing Time' },
-            { icon: <CheckCircle className="w-6 h-6" />, value: '99%', label: 'Accuracy Rate' },
-            { icon: <Shield className="w-6 h-6" />, value: '100%', label: 'Secure & Private' }
+            { icon: <Zap className="w-6 h-6" />, value: '15+', label: t('aiModels') },
+            { icon: <CheckCircle className="w-6 h-6" />, value: '99.2%', label: t('aiAccuracy') },
+            { icon: <Shield className="w-6 h-6" />, value: '24/7', label: t('aiAssistant') }
           ].map((stat, index) => (
             <div key={index} className="text-center p-6 bg-gray-50 rounded-lg">
               <div className="flex justify-center mb-3 text-blue-600">

@@ -4,8 +4,10 @@ import {
   ArrowRight, Zap, Shield, Users, Award, 
   TrendingUp, MapPin, CheckCircle, Globe 
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     schemes: 1234,
     users: 50000,
@@ -55,23 +57,23 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
   const features = [
     {
       icon: <Zap className="w-6 h-6" />,
-      title: "AI-Powered Analysis",
-      description: "Advanced document scanning with 99% accuracy"
+      title: t('smartDocumentAI'),
+      description: t('smartDocumentDesc')
     },
     {
       icon: <Shield className="w-6 h-6" />,
-      title: "Secure & Private",
-      description: "Your data is encrypted and never stored"
+      title: t('personalizedInsights'),
+      description: t('personalizedDesc')
     },
     {
       icon: <Users className="w-6 h-6" />,
-      title: "Multi-Language",
-      description: "Support for 12+ Indian languages"
+      title: t('voiceTextAI'),
+      description: t('voiceTextDesc')
     },
     {
       icon: <Award className="w-6 h-6" />,
-      title: "Verified Schemes",
-      description: "Only authentic government schemes"
+      title: t('endToEndGuidance'),
+      description: t('endToEndDesc')
     }
   ];
 
@@ -97,7 +99,7 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
             >
               <div className="w-2 h-2 rounded-full bg-green-500" />
               <span className="text-sm font-medium text-green-700">
-                Trusted by 50,000+ users
+                {t('trustedUsers')}
               </span>
             </motion.div>
 
@@ -109,9 +111,9 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                Discover Government Schemes
+                {t('heroTitle')}
                 <br />
-                <span className="text-blue-600">Made Simple</span>
+                <span className="text-blue-600">{t('heroSubtitle')}</span>
               </motion.h1>
               
               <motion.p
@@ -120,8 +122,7 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
-                AI-powered platform to find government schemes and benefits you're eligible for. 
-                Upload documents, speak, or type your details for instant analysis.
+                {t('heroDescription')}
               </motion.p>
             </div>
 
@@ -136,7 +137,8 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
                 onClick={onStartScan}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
               >
-                <span>Start Analysis</span>
+                <Zap size={18} />
+                <span>{t('startAnalysis')}</span>
                 <ArrowRight size={18} />
               </button>
               
@@ -145,7 +147,7 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
                 className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2"
               >
                 <Globe size={18} />
-                <span>Learn More</span>
+                <span>{t('exploreTools')}</span>
               </button>
             </motion.div>
 
@@ -157,10 +159,10 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
               transition={{ delay: 0.9, duration: 0.6 }}
             >
               {[
-                { value: `${stats.schemes.toLocaleString()}+`, label: 'Schemes' },
-                { value: `${(stats.users / 1000).toFixed(0)}K+`, label: 'Users' },
-                { value: stats.languages, label: 'Languages' },
-                { value: `${stats.success}%`, label: 'Success Rate' }
+                { value: `${stats.schemes.toLocaleString()}+`, label: t('schemes') },
+                { value: `${(stats.users / 1000).toFixed(0)}K+`, label: t('users') },
+                { value: stats.languages, label: t('languages') },
+                { value: `${stats.success}%`, label: t('successRate') }
               ].map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="text-2xl font-bold text-gray-900 mb-1">

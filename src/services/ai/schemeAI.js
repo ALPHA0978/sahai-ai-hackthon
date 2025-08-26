@@ -2,7 +2,13 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 export class SchemeAI {
-  static async callAPI(prompt, systemPrompt) {
+  static async callAPI(prompt, systemPrompt, language = 'en') {
+    const langInstruction = language === 'hi' 
+      ? 'Respond in Hindi (Devanagari script). All text, descriptions, and explanations must be in Hindi.'
+      : 'Respond in English.';
+    
+    const fullSystemPrompt = `${systemPrompt}\n\nIMPORTANT: ${langInstruction}`;
+    
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
@@ -14,7 +20,7 @@ export class SchemeAI {
       body: JSON.stringify({
         model: 'google/gemini-flash-1.5',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullSystemPrompt },
           { role: 'user', content: prompt }
         ],
         temperature: 0.1,
@@ -28,7 +34,7 @@ export class SchemeAI {
     return data.choices?.[0]?.message?.content;
   }
 
-  static async analyzeDocument(documentText) {
+  static async analyzeDocument(documentText, language = 'en') {
     const systemPrompt = `Extract user profile from document. Return ONLY valid JSON:
 {
   "name": "string or null",
@@ -49,11 +55,11 @@ export class SchemeAI {
   "aadhaarCard": boolean or null
 }`;
 
-    const response = await this.callAPI(`Extract profile: "${documentText}"`, systemPrompt);
+    const response = await this.callAPI(`Extract profile: "${documentText}"`, systemPrompt, language);
     return this.parseJSON(response);
   }
 
-  static async findSchemes(userProfile) {
+  static async findSchemes(userProfile, language = 'en') {
     const systemPrompt = `Find eligible Indian government schemes. Return JSON array:
 [{
   "id": "unique_id",
@@ -71,12 +77,12 @@ export class SchemeAI {
   "lastUpdated": "2024-01-01"
 }]`;
 
-    const response = await this.callAPI(`Profile: ${JSON.stringify(userProfile)}`, systemPrompt);
+    const response = await this.callAPI(`Profile: ${JSON.stringify(userProfile)}`, systemPrompt, language);
     const schemes = this.parseJSON(response);
     return Array.isArray(schemes) ? schemes : [];
   }
 
-  static async getPopularSchemes() {
+  static async getPopularSchemes(language = 'en') {
     const systemPrompt = `Return new top 10 popular Indian government schemes which is not end as JSON array. Include detailed descriptions, proper government URLs, requirements, and benefits:
 [{
   "id": "unique_id",
@@ -94,7 +100,7 @@ export class SchemeAI {
   "lastUpdated": "2024-01-01"
 }]`;
     
-    const response = await this.callAPI('List popular schemes: PM-KISAN, PMAY, Ayushman Bharat, MGNREGA, PM-SBY, Ujjwala, Mudra, Kisan Credit Card, Sukanya Samriddhi, APY', systemPrompt);
+    const response = await this.callAPI('List popular schemes: PM-KISAN, PMAY, Ayushman Bharat, MGNREGA, PM-SBY, Ujjwala, Mudra, Kisan Credit Card, Sukanya Samriddhi, APY', systemPrompt, language);
     const schemes = this.parseJSON(response);
     return Array.isArray(schemes) && schemes.length > 0 ? schemes : this.getDefaultSchemes();
   }

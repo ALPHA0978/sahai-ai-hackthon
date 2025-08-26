@@ -1,6 +1,8 @@
 import { ExternalLink, MapPin, IndianRupee, Award, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
+  const { t } = useTranslation();
   if (!schemes.length && !isLoading) return null;
 
   return (
@@ -10,11 +12,11 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 mb-4">
             <Award size={14} />
-            <span className="text-sm font-medium">Results</span>
+            <span className="text-sm font-medium">{t('aiResults')}</span>
           </div>
           
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            {userProfile ? 'Your Eligible Schemes' : 'Government Schemes'}
+            {userProfile ? t('eligibleSchemes') : t('schemes')}
           </h2>
           
           <p className="text-gray-600 max-w-2xl mx-auto">
@@ -70,7 +72,7 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                           ) : (
                             <XCircle size={16} />
                           )}
-                          <span>{scheme.isEligible ? 'Eligible' : 'Not Eligible'}</span>
+                          <span>{scheme.isEligible ? t('eligible') : t('notEligible')}</span>
                         </div>
                       )}
                     </div>
@@ -121,7 +123,7 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                           }
                         }}
                       >
-                        {scheme.isEligible === false ? 'Not Eligible' : 'Apply Now'}
+                        {scheme.isEligible === false ? t('notEligible') : t('applyNow')}
                       </button>
                       
                       <button 
@@ -133,7 +135,7 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                         }}
                       >
                         <ExternalLink size={16} />
-                        <span>Details</span>
+                        <span>{t('viewDetails')}</span>
                       </button>
                     </div>
                   </div>

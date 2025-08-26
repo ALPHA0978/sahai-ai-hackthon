@@ -17,16 +17,16 @@ export class OpenRouterService {
   }
 
   // Delegate to SchemeAI
-  static async analyzeDocument(documentText) {
-    return SchemeAI.analyzeDocument(documentText);
+  static async analyzeDocument(documentText, language = 'en') {
+    return SchemeAI.analyzeDocument(documentText, language);
   }
 
-  static async findSchemes(userProfile) {
-    return SchemeAI.findSchemes(userProfile);
+  static async findSchemes(userProfile, language = 'en') {
+    return SchemeAI.findSchemes(userProfile, language);
   }
 
-  static async getPopularSchemes() {
-    return SchemeAI.getPopularSchemes();
+  static async getPopularSchemes(language = 'en') {
+    return SchemeAI.getPopularSchemes(language);
   }
 
   static getDefaultSchemes() {
