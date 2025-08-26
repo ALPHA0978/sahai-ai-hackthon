@@ -1,8 +1,8 @@
 import { Mail, Phone, MapPin, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const SimpleFooter = () => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">

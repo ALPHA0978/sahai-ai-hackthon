@@ -11,6 +11,7 @@ import { DataService } from './services/dataService';
 import { useAuth } from './auth';
 import { AuthProvider } from './auth';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
 import './styles/simple-theme.css';
 import './App.css';
@@ -170,11 +171,13 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

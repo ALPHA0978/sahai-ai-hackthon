@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../auth';
 import { LoginPage } from '../auth';
 import { useTheme } from '../contexts/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { DataService } from '../services/dataService';
 
 const ModernHeader = () => {
@@ -15,13 +15,14 @@ const ModernHeader = () => {
   const [showLoginPage, setShowLoginPage] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { currentLanguage, changeLanguage: changeLang, t } = useLanguage();
   
   const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
+    changeLang(lng);
   };
 
   useEffect(() => {
@@ -53,7 +54,15 @@ const ModernHeader = () => {
     { code: 'HI', name: 'हिंदी' },
     { code: 'BN', name: 'বাংলা' },
     { code: 'TE', name: 'తెలుగు' },
-    { code: 'MR', name: 'मराठी' }
+    { code: 'MR', name: 'मराठी' },
+    { code: 'TA', name: 'தமிழ்' },
+    { code: 'GU', name: 'ગુજરાતી' },
+    { code: 'KN', name: 'ಕನ್ನಡ' },
+    { code: 'ML', name: 'മലയാളം' },
+    { code: 'PA', name: 'ਪੰਜਾਬੀ' },
+    { code: 'OR', name: 'ଓଡ଼ିଆ' },
+    { code: 'AS', name: 'অসমীয়া' },
+    { code: 'UR', name: 'اردو' }
   ];
 
   return (
@@ -101,14 +110,34 @@ const ModernHeader = () => {
               </div>
 
               {/* Language Selector */}
-              <button
-                onClick={() => changeLanguage(i18n.language === 'en' ? 'hi' : 'en')}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Globe size={16} />
-                <span className="text-sm font-medium">{i18n.language.toUpperCase()}</span>
-                <ChevronDown size={14} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Globe size={16} />
+                  <span className="text-sm font-medium">{languages.find(l => l.code === currentLanguage)?.name || 'EN'}</span>
+                  <ChevronDown size={14} className={`transition-transform ${showLanguageMenu ? 'rotate-180' : ''}`} />
+                </button>
+                {showLanguageMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-64 overflow-y-auto">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          changeLanguage(lang.code);
+                          setShowLanguageMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
+                          currentLanguage === lang.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        {lang.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Theme Toggle */}
               <button
@@ -234,11 +263,11 @@ const ModernHeader = () => {
                 {/* Mobile Actions */}
                 <div className="flex items-center justify-between">
                   <button
-                    onClick={() => changeLanguage(i18n.language === 'en' ? 'hi' : 'en')}
+                    onClick={() => changeLanguage(currentLanguage === 'EN' ? 'HI' : 'EN')}
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg btn-secondary"
                   >
                     <Globe size={16} />
-                    <span>{i18n.language.toUpperCase()}</span>
+                    <span>{languages.find(l => l.code === currentLanguage)?.name || 'EN'}</span>
                   </button>
 
                   <button
@@ -310,12 +339,13 @@ const ModernHeader = () => {
       />
 
       {/* Click outside to close menus */}
-      {(showUserMenu || showMobileMenu) && (
+      {(showUserMenu || showMobileMenu || showLanguageMenu) && (
         <div 
           className="fixed inset-0 z-40"
           onClick={() => {
             setShowUserMenu(false);
             setShowMobileMenu(false);
+            setShowLanguageMenu(false);
           }}
         />
       )}

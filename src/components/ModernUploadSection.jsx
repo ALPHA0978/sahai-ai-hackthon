@@ -11,10 +11,10 @@ import { OpenRouterService } from '../services/api/openRouterService';
 import { DataService } from '../services/dataService';
 // Voice functionality temporarily disabled - speechService removed
 import { useAuth } from '../auth';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const ModernUploadSection = ({ onSchemesFound }) => {
-  const { t, i18n } = useTranslation();
+  const { t, currentLanguage } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -60,7 +60,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
 
       updateProgress('Analyzing document with AI...', 60);
       
-      const userProfile = await OpenRouterService.analyzeDocument(extractedText, i18n.language);
+      const userProfile = await OpenRouterService.analyzeDocument(extractedText, currentLanguage);
       
       if (!userProfile) {
         throw new Error('Could not extract profile information from document');
@@ -128,7 +128,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
     try {
       updateProgress('Analyzing text input...', 30);
       
-      const userProfile = await OpenRouterService.analyzeDocument(textInput, i18n.language);
+      const userProfile = await OpenRouterService.analyzeDocument(textInput, currentLanguage);
       
       if (!userProfile) {
         throw new Error('Could not extract profile information from text');
@@ -207,7 +207,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
                 
                 <div>
                   <p className="text-lg font-semibold text-gray-900 mb-4">
-                    {processingStep || 'Processing Document...'}
+                    {processingStep || t('analyzing')}
                   </p>
                   
                   <div className="w-full max-w-md mx-auto">
@@ -230,7 +230,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
                 </div>
                 <div>
                   <p className="text-lg font-semibold text-red-600 mb-2">
-                    Processing Failed
+                    {t('processingFailed')}
                   </p>
                   <p className="text-sm text-red-500 mb-4">
                     {error}
@@ -239,7 +239,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
                     onClick={() => setError(null)}
                     className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
                   >
-                    Try Again
+                    {t('tryAgain')}
                   </button>
                 </div>
               </div>
@@ -365,7 +365,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-semibold" style={{ color: 'var(--text)' }}>
-                    Enter Your Details
+                    {t('enterDetails')}
                   </h3>
                   <button 
                     onClick={() => setShowTextModal(false)}
@@ -392,7 +392,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
                     onClick={() => setShowTextModal(false)}
                     className="flex-1 btn btn-secondary"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     onClick={handleTextSubmit}
@@ -400,7 +400,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
                     className="flex-1 btn btn-primary disabled:opacity-50"
                   >
                     <Zap size={16} />
-                    Analyze Text
+                    {t('analyzeText')}
                   </button>
                 </div>
               </motion.div>

@@ -1,8 +1,8 @@
 import { ExternalLink, MapPin, IndianRupee, Award, CheckCircle, XCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   if (!schemes.length && !isLoading) return null;
 
   return (
@@ -12,11 +12,11 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 mb-4">
             <Award size={14} />
-            <span className="text-sm font-medium">{t('aiResults')}</span>
+            <span className="text-sm font-medium">{t('eligibilityResults')}</span>
           </div>
           
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            {userProfile ? t('eligibleSchemes') : t('schemes')}
+            {userProfile ? t('foundSchemes') : t('schemes')}
           </h2>
           
           <p className="text-gray-600 max-w-2xl mx-auto">

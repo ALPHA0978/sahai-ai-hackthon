@@ -4,10 +4,10 @@ import {
   ArrowRight, Zap, Shield, Users, Award, 
   TrendingUp, MapPin, CheckCircle, Globe 
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [stats, setStats] = useState({
     schemes: 1234,
     users: 50000,

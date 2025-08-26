@@ -1,8 +1,8 @@
 import { ArrowRight, Zap } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const SimpleCTASection = () => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-600">
