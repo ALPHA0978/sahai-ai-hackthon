@@ -137,6 +137,14 @@ export class BaseAI {
         cleanResponse = jsonMatch[1].trim();
       }
       
+      // Fix HTML entities
+      cleanResponse = cleanResponse
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&#39;/g, "'");
+      
       // Try to extract JSON from the response
       const arrayMatch = cleanResponse.match(/\[[\s\S]*\]/);
       const objectMatch = cleanResponse.match(/\{[\s\S]*\}/);
@@ -159,6 +167,11 @@ export class BaseAI {
         let fixedResponse = response
           .replace(/```json/g, '')
           .replace(/```/g, '')
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&#39;/g, "'")
           .replace(/\n/g, ' ')
           .replace(/\r/g, '')
           .trim();
@@ -169,6 +182,12 @@ export class BaseAI {
         
         if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
           fixedResponse = fixedResponse.substring(startIndex, endIndex + 1);
+          
+          // Additional cleanup for malformed JSON
+          fixedResponse = fixedResponse
+            .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
+            .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":'); // Quote unquoted keys
+          
           return JSON.parse(fixedResponse);
         }
       } catch (secondError) {

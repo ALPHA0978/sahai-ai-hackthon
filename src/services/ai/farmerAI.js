@@ -272,18 +272,24 @@ export class FarmerAI extends BaseAI {
 
   static async analyzeMarketConditions(location, season, soilType) {
     try {
-      const systemPrompt = `You are a market analyst. Return ONLY valid JSON:
+      const systemPrompt = `You are a market analyst. Return ONLY valid JSON without any extra text:
 {
   "shortages": ["crop1", "crop2"],
   "corporateDemand": [{"company": "name", "crops": ["crop1"], "increase": "25%"}],
   "priceRising": ["crop1", "crop2"],
   "nutritionNeeds": ["protein", "iron"]
-}`;
+}
+
+IMPORTANT: Return ONLY the JSON object, no additional text.`;
 
       const response = await this.callAPI(`Analyze current market conditions for ${location}, ${season} season, ${soilType} soil. Focus on supply shortages, corporate procurement increases, rising prices, and nutrition gaps.`, systemPrompt);
+      
+      if (!response) {
+        throw new Error('No response from API');
+      }
+      
       const parsed = this.parseJSON(response);
       
-      // Return fallback data if parsing fails
       return parsed || {
         shortages: ['Rice', 'Wheat', 'Pulses'],
         corporateDemand: [{company: 'Food Corp', crops: ['Rice'], increase: '25%'}],
@@ -370,17 +376,34 @@ export class FarmerAI extends BaseAI {
   }
 
   static async analyzeCorporateProcurement(crops, location) {
-    const systemPrompt = `You are a corporate procurement analyst. Return ONLY valid JSON:
+    try {
+      const systemPrompt = `You are a corporate procurement analyst. Return ONLY valid JSON array:
 [{
   "company": "company name",
   "crops": ["crop1", "crop2"],
   "increasePercentage": "X%",
   "reason": "why increasing procurement",
   "contractOpportunity": "direct contract potential"
-}]`;
+}]
 
-    const response = await this.callAPI(`Analyze which companies are increasing procurement for ${crops.join(', ')} in ${location}. Focus on food processing companies, FMCG brands, and export companies.`, systemPrompt);
-    return this.parseJSON(response);
+IMPORTANT: Return ONLY the JSON array, no additional text.`;
+
+      const response = await this.callAPI(`Analyze which companies are increasing procurement for ${crops.join(', ')} in ${location}. Focus on food processing companies, FMCG brands, and export companies.`, systemPrompt);
+      
+      if (!response) {
+        throw new Error('No response from API');
+      }
+      
+      const parsed = this.parseJSON(response);
+      return parsed || [
+        {company: 'Food Corp', crops: crops.slice(0, 2), increasePercentage: '25%', reason: 'Market demand increase', contractOpportunity: 'Direct supply contract'}
+      ];
+    } catch (error) {
+      console.error('Corporate procurement analysis error:', error);
+      return [
+        {company: 'Food Corp', crops: crops.slice(0, 2), increasePercentage: '25%', reason: 'Market demand increase', contractOpportunity: 'Direct supply contract'}
+      ];
+    }
   }
 
   static async analyzeRegionalGaps(crops, location) {
