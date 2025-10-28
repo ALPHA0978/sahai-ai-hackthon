@@ -1,4 +1,4 @@
-import { SchemeAI } from '../ai/schemeAI.js';
+import { EnhancedSchemeAI } from '../ai/enhancedSchemeAI.js';
 import { EducationAI } from '../ai/educationAI.js';
 import { JobAI } from '../ai/jobAI.js';
 import { InfrastructureAI } from '../ai/infrastructureAI.js';
@@ -16,24 +16,32 @@ export class OpenRouterService {
     return BaseAI.callAPI(prompt, systemPrompt);
   }
 
-  // Delegate to SchemeAI
+  // Delegate to EnhancedSchemeAI
   static async analyzeDocument(documentText, language = 'en') {
-    return SchemeAI.analyzeDocument(documentText, language);
+    return EnhancedSchemeAI.analyzeDocument(documentText, language);
   }
 
   static async findSchemes(userProfile, language = 'en') {
-    return SchemeAI.findSchemes(userProfile, language);
+    return EnhancedSchemeAI.findSchemes(userProfile, language);
   }
 
   static async getPopularSchemes(language = 'en') {
-    return SchemeAI.getPopularSchemes(language);
+    return EnhancedSchemeAI.getPopularSchemes(language);
   }
 
-  static getDefaultSchemes() {
-    return SchemeAI.getDefaultSchemes();
+  static async searchSchemes(query, filters = {}, language = 'en') {
+    return EnhancedSchemeAI.searchSchemes(query, filters, language);
   }
 
-  // Delegate to EducationAI
+  static async getSchemeDetails(schemeId, language = 'en') {
+    return EnhancedSchemeAI.getSchemeDetails(schemeId, language);
+  }
+
+  static async checkSchemeStatus(schemeIds, language = 'en') {
+    return EnhancedSchemeAI.checkSchemeStatus(schemeIds, language);
+  }
+
+  // Delegate to EducationAI - Enhanced methods
   static async generateEducationAssessment(studentProfile) {
     return EducationAI.generateAssessment(studentProfile);
   }
@@ -42,12 +50,24 @@ export class OpenRouterService {
     return EducationAI.generateAssessment(studentProfile);
   }
 
-  static async generatePersonalizedLessons(studentProfile) {
-    return EducationAI.generateLessons(studentProfile);
+  static async generatePersonalizedLessons(studentProfile, subject, count = 5) {
+    return EducationAI.generateLessons(studentProfile, subject, count);
   }
 
   static async chatWithAI(message, studentContext) {
     return EducationAI.chatWithAI(message, studentContext);
+  }
+
+  static async analyzeStudentSkillGaps(studentProfile, targetLevel) {
+    return EducationAI.analyzeSkillGaps(studentProfile, targetLevel);
+  }
+
+  static async provideStudentCareerGuidance(studentProfile, interests) {
+    return EducationAI.provideCareerGuidance(studentProfile, interests);
+  }
+
+  static async trackStudentProgress(studentId, assessmentData) {
+    return EducationAI.trackProgress(studentId, assessmentData);
   }
 
   // Delegate to JobAI
@@ -71,7 +91,7 @@ export class OpenRouterService {
     return JobAI.getFallbackJobs(jobProfile);
   }
 
-  // Delegate to InfrastructureAI
+  // Delegate to InfrastructureAI - Enhanced methods
   static async analyzeInfrastructure(projectData) {
     return InfrastructureAI.analyzeProject(projectData);
   }
@@ -88,17 +108,29 @@ export class OpenRouterService {
     return InfrastructureAI.planResources(projectData);
   }
 
-  // Delegate to CareerAI
+  static async planSmartCity(cityData) {
+    return InfrastructureAI.planSmartCity(cityData);
+  }
+
+  // Delegate to CareerAI - Enhanced methods
   static async analyzeSkillGaps(jobProfile) {
     return CareerAI.analyzeSkillGaps(jobProfile);
   }
 
-  static async generateResumeTips(jobProfile) {
-    return CareerAI.generateResumeTips(jobProfile);
+  static async generateResumeTips(jobProfile, targetJob = null) {
+    return CareerAI.generateResumeTips(jobProfile, targetJob);
   }
 
-  static async generateInterviewQuestions(jobTitle, skills) {
-    return CareerAI.generateInterviewQuestions(jobTitle, skills);
+  static async generateInterviewQuestions(jobTitle, skills, companyInfo = null) {
+    return CareerAI.generateInterviewQuestions(jobTitle, skills, companyInfo);
+  }
+
+  static async analyzeJobMarket(industry, location, role) {
+    return CareerAI.analyzeJobMarket(industry, location, role);
+  }
+
+  static async planCareerTransition(currentProfile, targetCareer) {
+    return CareerAI.planCareerTransition(currentProfile, targetCareer);
   }
 
   // Delegate to FarmerAI
@@ -134,13 +166,29 @@ export class OpenRouterService {
     return FarmerAI.optimizeIrrigation(farmData);
   }
 
-  // Delegate to HealthcareAI
-  static async analyzeSymptoms(symptoms) {
-    return HealthcareAI.analyzeSymptoms(symptoms);
+  // Delegate to HealthcareAI - Enhanced methods
+  static async analyzeSymptoms(symptoms, patientProfile = {}) {
+    return HealthcareAI.analyzeSymptoms(symptoms, patientProfile);
   }
 
-  static async suggestTreatment(condition) {
-    return HealthcareAI.suggestTreatment(condition);
+  static async suggestTreatment(condition, patientProfile = {}) {
+    return HealthcareAI.suggestTreatment(condition, patientProfile);
+  }
+
+  static async assessHealthRisk(healthData) {
+    return HealthcareAI.assessHealthRisk(healthData);
+  }
+
+  static async provideMentalHealthSupport(concerns, urgency = 'medium') {
+    return HealthcareAI.provideMentalHealthSupport(concerns, urgency);
+  }
+
+  static async getMedicationInfo(medicationName) {
+    return HealthcareAI.getMedicationInfo(medicationName);
+  }
+
+  static async getEmergencyGuidance(emergency) {
+    return HealthcareAI.getEmergencyGuidance(emergency);
   }
 
   // Delegate to PovertyAI
@@ -248,6 +296,6 @@ export class OpenRouterService {
 
   // Legacy method support
   static parseJSON(response) {
-    return BaseAI.parseJSON ? BaseAI.parseJSON(response) : SchemeAI.parseJSON(response);
+    return BaseAI.parseJSON ? BaseAI.parseJSON(response) : EnhancedSchemeAI.parseJSON(response);
   }
 }

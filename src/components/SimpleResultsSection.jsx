@@ -3,7 +3,13 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
   const { t } = useLanguage();
-  if (!schemes.length && !isLoading) return null;
+  console.log('SimpleResultsSection render:', { schemes: schemes?.length, isLoading });
+  
+  // Always show the section if we're loading or if we should have schemes
+  if (!schemes.length && !isLoading) {
+    console.log('No schemes to display, hiding section');
+    return null;
+  }
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
@@ -40,7 +46,13 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                   </div>
                 ))
               ) : (
-                schemes.map((scheme, index) => (
+                schemes.map((scheme, index) => {
+                  console.log('Scheme URLs:', { 
+                    title: scheme.title, 
+                    applicationUrl: scheme.applicationUrl, 
+                    eligibilityUrl: scheme.eligibilityUrl 
+                  });
+                  return (
                   <div
                     key={scheme.id || index}
                     className={`bg-white border-2 rounded-lg p-6 ${
@@ -139,7 +151,8 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                       </button>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

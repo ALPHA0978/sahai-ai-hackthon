@@ -33,47 +33,15 @@ const AIHealthcareTool = ({ onBack }) => {
     setIsAnalyzing(true);
     
     try {
-      const systemPrompt = `You are an AI medical assistant. Analyze symptoms and provide preliminary diagnosis as JSON:
-      {
-        "preliminaryDiagnosis": [
-          {
-            "condition": "condition name",
-            "probability": "percentage",
-            "severity": "Mild|Moderate|Severe",
-            "description": "condition description"
-          }
-        ],
-        "recommendations": {
-          "urgency": "Low|Medium|High|Emergency",
-          "nextSteps": ["step1", "step2"],
-          "doctorConsultation": "Yes|No",
-          "specialistType": "specialist type if needed",
-          "homeRemedies": ["remedy1", "remedy2"],
-          "warningSignsToWatch": ["sign1", "sign2"]
-        },
-        "additionalTests": ["test1", "test2"],
-        "disclaimer": "This is not a substitute for professional medical advice"
-      }`;
-
-      const prompt = `Analyze these symptoms:
-      Description: ${symptoms.description}
-      Pain: ${symptoms.pain}
-      Fever: ${symptoms.fever ? 'Yes' : 'No'}
-      Fatigue: ${symptoms.fatigue ? 'Yes' : 'No'}
-      Duration: ${symptoms.duration}
-      Severity: ${symptoms.severity}
+      const symptomsText = `${symptoms.description} ${symptoms.pain ? 'Pain: ' + symptoms.pain : ''} ${symptoms.fever ? 'Has fever' : ''} ${symptoms.fatigue ? 'Has fatigue' : ''} Duration: ${symptoms.duration} Severity: ${symptoms.severity}`;
       
-      Medical History:
-      Past Diseases: ${medicalHistory.pastDiseases}
-      Allergies: ${medicalHistory.allergies}
-      Current Medications: ${medicalHistory.medications}
-      Family History: ${medicalHistory.familyHistory}
-      Lifestyle: ${medicalHistory.lifestyle}
-      
-      Provide preliminary diagnosis and recommendations.`;
+      const patientProfile = {
+        age: 'Not specified',
+        gender: 'Not specified',
+        medicalHistory: `${medicalHistory.pastDiseases} ${medicalHistory.allergies} ${medicalHistory.medications} ${medicalHistory.familyHistory} ${medicalHistory.lifestyle}`.trim()
+      };
 
-      const response = await OpenRouterService.callAPI(prompt, systemPrompt);
-      const analysis = OpenRouterService.parseJSON(response);
+      const analysis = await OpenRouterService.analyzeSymptoms(symptomsText, patientProfile);
       setDiagnosis(analysis);
       
     } catch (error) {
@@ -93,58 +61,51 @@ const AIHealthcareTool = ({ onBack }) => {
     setIsAnalyzing(true);
     
     try {
-      const systemPrompt = `You are an AI healthcare assistant. Create personalized treatment plan as JSON:
-      {
-        "treatmentPlan": {
-          "medications": [
-            {
-              "name": "medication name",
-              "dosage": "dosage info",
-              "frequency": "frequency",
-              "duration": "duration",
-              "notes": "special instructions"
-            }
-          ],
-          "homeRemedies": ["remedy1", "remedy2"],
-          "lifestyle": ["change1", "change2"],
-          "exercises": [
-            {
-              "type": "exercise type",
-              "description": "exercise description",
-              "duration": "duration",
-              "frequency": "frequency"
-            }
-          ],
-          "yoga": [
-            {
-              "pose": "yoga pose name",
-              "benefits": "benefits",
-              "instructions": "how to do it"
-            }
-          ],
-          "diet": {
-            "recommendations": ["food1", "food2"],
-            "avoid": ["avoid1", "avoid2"],
-            "mealPlan": "sample meal plan"
+      const topCondition = diagnosis.possibleConditions?.[0] || diagnosis.assessment;
+      const condition = topCondition?.condition || topCondition?.primaryConcern || 'General health concern';
+      
+      const patientProfile = {
+        age: 'Not specified',
+        gender: 'Not specified',
+        medicalHistory: `${medicalHistory.pastDiseases} ${medicalHistory.allergies} ${medicalHistory.medications} ${medicalHistory.familyHistory}`.trim(),
+        allergies: medicalHistory.allergies,
+        currentSymptoms: symptoms.description
+      };
+
+      const plan = await OpenRouterService.suggestTreatment(condition, patientProfile);
+      
+      // Transform the enhanced response to match UI expectations
+      const transformedPlan = {
+        treatmentPlan: {
+          medications: plan?.filter(t => t.category === 'Medical').map(t => ({
+            name: t.treatment,
+            dosage: t.instructions?.[0] || 'As prescribed',
+            frequency: t.duration || 'As needed',
+            duration: t.duration || 'Consult doctor',
+            notes: t.description
+          })) || [],
+          homeRemedies: plan?.filter(t => t.category === 'Home Remedy').map(t => t.treatment) || [],
+          lifestyle: plan?.filter(t => t.category === 'Lifestyle').map(t => t.treatment) || [],
+          exercises: plan?.filter(t => t.category === 'Lifestyle').map(t => ({
+            type: t.treatment,
+            description: t.description,
+            duration: t.duration || '30 minutes',
+            frequency: 'Daily'
+          })) || [],
+          diet: {
+            recommendations: ['Balanced nutrition', 'Stay hydrated'],
+            avoid: ['Processed foods', 'Excessive sugar'],
+            mealPlan: 'Consult nutritionist for personalized meal plan'
           }
         },
-        "monitoring": {
-          "trackSymptoms": ["symptom1", "symptom2"],
-          "checkupSchedule": "follow-up timeline",
-          "emergencySignals": ["signal1", "signal2"]
+        monitoring: {
+          trackSymptoms: plan?.[0]?.monitoring || ['Monitor symptoms'],
+          checkupSchedule: 'Follow up in 1-2 weeks',
+          emergencySignals: ['Worsening symptoms', 'Severe pain', 'Difficulty breathing']
         }
-      }`;
-
-      const topCondition = diagnosis.preliminaryDiagnosis?.[0];
-      const prompt = `Create treatment plan for: ${topCondition?.condition}
-      Severity: ${topCondition?.severity}
-      Patient symptoms: ${symptoms.description}
-      Medical history: ${medicalHistory.pastDiseases}
-      Allergies: ${medicalHistory.allergies}`;
-
-      const response = await OpenRouterService.callAPI(prompt, systemPrompt);
-      const plan = OpenRouterService.parseJSON(response);
-      setTreatmentPlan(plan);
+      };
+      
+      setTreatmentPlan(transformedPlan);
       
     } catch (error) {
       console.error('Treatment plan error:', error);
@@ -447,48 +408,87 @@ const AIHealthcareTool = ({ onBack }) => {
                   ) : (
                     <>
                       {/* Preliminary Diagnosis */}
-                      {diagnosis.preliminaryDiagnosis && (
+                      {(diagnosis.possibleConditions || diagnosis.assessment) && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-3">Possible Conditions</h4>
-                          {diagnosis.preliminaryDiagnosis.slice(0, 3).map((condition, index) => (
+                          <h4 className="font-semibold text-gray-900 mb-3">Assessment Results</h4>
+                          
+                          {diagnosis.assessment && (
+                            <div className="p-3 bg-blue-50 rounded-lg mb-3">
+                              <h5 className="font-medium text-blue-800">{diagnosis.assessment.primaryConcern}</h5>
+                              <p className="text-sm text-blue-700 mb-1">{diagnosis.assessment.description}</p>
+                              <div className="flex items-center space-x-2">
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  diagnosis.assessment.severity === 'Mild' ? 'bg-green-200 text-green-700' :
+                                  diagnosis.assessment.severity === 'Moderate' ? 'bg-yellow-200 text-yellow-700' : 'bg-red-200 text-red-700'
+                                }`}>
+                                  {diagnosis.assessment.severity}
+                                </span>
+                                <span className="text-xs text-blue-600">Confidence: {diagnosis.assessment.confidence}%</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {diagnosis.possibleConditions && diagnosis.possibleConditions.slice(0, 3).map((condition, index) => (
                             <div key={index} className="p-3 bg-blue-50 rounded-lg mb-2">
                               <div className="flex justify-between items-start mb-2">
                                 <h5 className="font-medium text-blue-800">{condition.condition}</h5>
                                 <span className="text-sm font-semibold text-blue-700">{condition.probability}</span>
                               </div>
                               <p className="text-sm text-blue-700 mb-1">{condition.description}</p>
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                condition.severity === 'Mild' ? 'bg-green-200 text-green-700' :
-                                condition.severity === 'Moderate' ? 'bg-yellow-200 text-yellow-700' : 'bg-red-200 text-red-700'
-                              }`}>
-                                {condition.severity}
-                              </span>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {condition.commonSymptoms?.map((symptom, idx) => (
+                                  <span key={idx} className="text-xs px-2 py-1 bg-blue-200 text-blue-700 rounded">
+                                    {symptom}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           ))}
                         </div>
                       )}
 
-                      {/* Recommendations */}
-                      {diagnosis.recommendations && (
+                      {/* Enhanced Recommendations */}
+                      {diagnosis.urgency && (
                         <div className="space-y-4">
                           <div className={`p-4 rounded-lg ${
-                            diagnosis.recommendations.urgency === 'Emergency' ? 'bg-red-50 border-l-4 border-red-500' :
-                            diagnosis.recommendations.urgency === 'High' ? 'bg-orange-50 border-l-4 border-orange-500' :
-                            diagnosis.recommendations.urgency === 'Medium' ? 'bg-yellow-50 border-l-4 border-yellow-500' : 'bg-green-50 border-l-4 border-green-500'
+                            diagnosis.urgency.level === 'Emergency' ? 'bg-red-50 border-l-4 border-red-500' :
+                            diagnosis.urgency.level === 'High' ? 'bg-orange-50 border-l-4 border-orange-500' :
+                            diagnosis.urgency.level === 'Medium' ? 'bg-yellow-50 border-l-4 border-yellow-500' : 'bg-green-50 border-l-4 border-green-500'
                           }`}>
-                            <h4 className="font-semibold mb-2">Urgency: {diagnosis.recommendations.urgency}</h4>
-                            <p className="text-sm mb-2">Doctor Consultation: {diagnosis.recommendations.doctorConsultation}</p>
-                            {diagnosis.recommendations.specialistType && (
-                              <p className="text-sm">Specialist: {diagnosis.recommendations.specialistType}</p>
-                            )}
+                            <h4 className="font-semibold mb-2">Urgency: {diagnosis.urgency.level}</h4>
+                            <p className="text-sm mb-2">Timeframe: {diagnosis.urgency.timeframe}</p>
+                            <p className="text-sm">{diagnosis.urgency.reason}</p>
                           </div>
 
-                          {diagnosis.recommendations.homeRemedies && (
+                          {diagnosis.recommendations?.immediate && (
                             <div className="p-3 bg-green-50 rounded-lg">
-                              <h5 className="font-medium text-green-800 mb-2">Home Remedies</h5>
+                              <h5 className="font-medium text-green-800 mb-2">Immediate Actions</h5>
                               <ul className="space-y-1">
-                                {diagnosis.recommendations.homeRemedies.map((remedy, index) => (
-                                  <li key={index} className="text-sm text-green-700">• {remedy}</li>
+                                {diagnosis.recommendations.immediate.map((action, index) => (
+                                  <li key={index} className="text-sm text-green-700">• {action}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {diagnosis.specialists && (
+                            <div className="p-3 bg-purple-50 rounded-lg">
+                              <h5 className="font-medium text-purple-800 mb-2">Recommended Specialists</h5>
+                              {diagnosis.specialists.map((specialist, index) => (
+                                <div key={index} className="mb-2">
+                                  <span className="text-sm font-medium text-purple-700">{specialist.type}</span>
+                                  <p className="text-xs text-purple-600">{specialist.reason}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {diagnosis.redFlags && (
+                            <div className="p-3 bg-red-50 rounded-lg">
+                              <h5 className="font-medium text-red-800 mb-2">⚠️ Warning Signs</h5>
+                              <ul className="space-y-1">
+                                {diagnosis.redFlags.map((flag, index) => (
+                                  <li key={index} className="text-sm text-red-700">• {flag}</li>
                                 ))}
                               </ul>
                             </div>
@@ -504,11 +504,11 @@ const AIHealthcareTool = ({ onBack }) => {
                         </div>
                       )}
 
-                      {diagnosis.disclaimer && (
-                        <div className="p-3 bg-gray-50 rounded-lg border">
-                          <p className="text-xs text-gray-600">{diagnosis.disclaimer}</p>
-                        </div>
-                      )}
+                      <div className="p-3 bg-gray-50 rounded-lg border">
+                        <p className="text-xs text-gray-600">
+                          {diagnosis.disclaimer || 'This is AI-generated information for educational purposes only. Always consult healthcare professionals for medical advice.'}
+                        </p>
+                      </div>
                     </>
                   )}
                 </div>

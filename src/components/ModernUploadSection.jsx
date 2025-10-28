@@ -66,21 +66,27 @@ const ModernUploadSection = ({ onSchemesFound }) => {
         throw new Error('Could not extract profile information from document');
       }
 
-      updateProgress('Profile extracted successfully!', 80);
+      updateProgress('Finding eligible schemes...', 80);
+      
+      // Get personalized schemes based on user profile
+      const schemes = await OpenRouterService.findSchemes(userProfile, currentLanguage);
+      
+      updateProgress('Profile extracted successfully!', 90);
       
       // Log analytics
       if (user) {
         await DataService.logUserAction(user.uid, 'document_processed', {
           fileType: file.type,
           fileSize: file.size,
-          documentUrl
+          documentUrl,
+          schemesFound: schemes?.length || 0
         });
       }
       
       updateProgress('Complete!', 100);
       
       if (onSchemesFound) {
-        onSchemesFound(userProfile);
+        onSchemesFound(userProfile, schemes);
       }
       
     } catch (error) {
@@ -134,16 +140,22 @@ const ModernUploadSection = ({ onSchemesFound }) => {
         throw new Error('Could not extract profile information from text');
       }
 
+      updateProgress('Finding eligible schemes...', 80);
+      
+      // Get personalized schemes based on user profile
+      const schemes = await OpenRouterService.findSchemes(userProfile, currentLanguage);
+      
       updateProgress('Text analysis complete!', 100);
       
       if (user) {
         await DataService.logUserAction(user.uid, 'text_processed', {
-          textLength: textInput.length
+          textLength: textInput.length,
+          schemesFound: schemes?.length || 0
         });
       }
       
       if (onSchemesFound) {
-        onSchemesFound(userProfile);
+        onSchemesFound(userProfile, schemes);
       }
       
     } catch (error) {

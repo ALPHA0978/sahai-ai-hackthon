@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import WelcomeCarousel from './components/WelcomeCarousel';
 import ModernHeader from './components/ModernHeader';
 import ModernHero from './components/ModernHero';
 import ModernUploadSection from './components/ModernUploadSection';
@@ -22,14 +23,27 @@ function AppContent() {
   const [isLoadingSchemes, setIsLoadingSchemes] = useState(false);
   const [error, setError] = useState(null);
   const [currentView, setCurrentView] = useState('main'); // 'main' or 'sdg'
+  const [showWelcome, setShowWelcome] = useState(true);
   const uploadSectionRef = useRef(null);
+  const isInitialLoadRef = useRef(false);
   const { user } = useAuth();
   const { i18n } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-    loadInitialData();
-  }, []);
+    if (!isInitialLoadRef.current && !showWelcome) {
+      window.scrollTo(0, 0);
+      loadInitialData();
+      isInitialLoadRef.current = true;
+    }
+  }, [showWelcome]);
+
+  useEffect(() => {
+    if (i18n.language !== currentLanguage && isInitialLoadRef.current) {
+      setCurrentLanguage(i18n.language);
+      loadInitialData();
+    }
+  }, [i18n.language]);
 
   useEffect(() => {
     if (user) {
@@ -38,26 +52,28 @@ function AppContent() {
   }, [user]);
 
   const loadInitialData = async () => {
+    if (showWelcome) return; // Don't load until welcome screen is closed
+    
     setIsLoadingSchemes(true);
     setError(null);
     
     try {
-      // Always fetch fresh schemes from AI
-      console.log('Fetching popular schemes from AI...');
-      const popularSchemes = await OpenRouterService.getPopularSchemes(i18n.language);
+      // Fetch schemes from AI in selected language
+      const langCode = i18n.language?.toLowerCase() || 'en';
+      console.log('Loading schemes in language:', langCode);
+      const popularSchemes = await OpenRouterService.getPopularSchemes(langCode);
+      console.log('Popular schemes received:', popularSchemes?.length || 0, 'schemes');
       
       if (popularSchemes?.length > 0) {
         setSchemes(popularSchemes);
         DataService.saveToLocalStorage('popular_schemes', popularSchemes);
       } else {
-        // Only use fallback if AI returns empty
-        setSchemes(OpenRouterService.getDefaultSchemes());
+        console.log('No schemes returned from AI');
+        setSchemes([]);
       }
     } catch (error) {
-      console.error('Error loading initial data:', error);
-      setError('Failed to load schemes from AI. Using fallback data.');
-      // Use fallback schemes if API fails
-      setSchemes(OpenRouterService.getDefaultSchemes());
+      console.error('Error loading schemes:', error);
+      setSchemes([]);
     } finally {
       setIsLoadingSchemes(false);
     }
@@ -83,7 +99,7 @@ function AppContent() {
     }
   };
 
-  const handleSchemesFound = async (profile) => {
+  const handleSchemesFound = async (profile, foundSchemes = null) => {
     setUserProfile(profile);
     setIsLoadingSchemes(true);
     setError(null);
@@ -95,36 +111,46 @@ function AppContent() {
         await DataService.logUserAction(user.uid, 'profile_analyzed', { profile });
       }
       
-      console.log('🔍 Finding schemes for profile:', profile);
-      const foundSchemes = await OpenRouterService.findSchemes(profile, i18n.language);
-      console.log('✅ AI returned schemes:', foundSchemes?.length || 0, 'schemes');
+      let schemesToUse = foundSchemes;
       
-      if (foundSchemes && foundSchemes.length > 0) {
-        setSchemes(foundSchemes);
-        console.log('📋 Schemes set in state:', foundSchemes);
+      // If schemes weren't provided, fetch them
+      if (!schemesToUse) {
+        console.log('🔍 Finding schemes for profile:', profile);
+        const langCode = i18n.language?.toLowerCase() || 'en';
+        schemesToUse = await OpenRouterService.findSchemes(profile, langCode);
+        console.log('✅ AI returned schemes:', schemesToUse?.length || 0, 'schemes');
+        
+        // If still no schemes, set empty array
+        if (!schemesToUse || schemesToUse.length === 0) {
+          schemesToUse = [];
+          console.log('🔄 No schemes found');
+        }
+      } else {
+        console.log('📋 Using provided schemes:', schemesToUse?.length || 0, 'schemes');
+      }
+      
+      if (schemesToUse && schemesToUse.length > 0) {
+        setSchemes(schemesToUse);
+        console.log('📋 Schemes set in state:', schemesToUse);
       } else {
         console.log('⚠️ No schemes found, keeping existing schemes');
       }
       
       // Cache schemes if user is logged in
-      if (user && foundSchemes?.length > 0) {
-        await DataService.cacheSchemes(user.uid, foundSchemes);
+      if (user && schemesToUse?.length > 0) {
+        await DataService.cacheSchemes(user.uid, schemesToUse);
       }
       
       // Save to localStorage for offline access
-      if (foundSchemes?.length > 0) {
-        DataService.saveToLocalStorage('last_schemes', foundSchemes);
+      if (schemesToUse?.length > 0) {
+        DataService.saveToLocalStorage('last_schemes', schemesToUse);
       }
       
     } catch (error) {
-      console.error('Error fetching schemes:', error);
-      setError('Failed to analyze document. Please try again.');
+      console.error('Error processing schemes:', error);
+      setError('Failed to process schemes. Please try again.');
       
-      // Try to load from localStorage as fallback
-      const fallbackSchemes = DataService.getFromLocalStorage('last_schemes');
-      if (fallbackSchemes) {
-        setSchemes(fallbackSchemes);
-      }
+      setSchemes([]);
     } finally {
       setIsLoadingSchemes(false);
     }
@@ -150,7 +176,9 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
+      {showWelcome && <WelcomeCarousel onContinue={() => setShowWelcome(false)} />}
+      <div className={showWelcome ? 'blur-sm pointer-events-none' : ''}>
       <ModernHeader />
       <main>
         <ModernHero onStartScan={handleStartScan} onNavigateToSDG={handleNavigateToSDG} />
@@ -162,9 +190,18 @@ function AppContent() {
           schemes={schemes} 
           isLoading={isLoadingSchemes}
         />
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{position: 'fixed', top: '10px', right: '10px', background: 'white', padding: '10px', border: '1px solid #ccc', fontSize: '12px'}}>
+            <div>Schemes: {schemes?.length || 0}</div>
+            <div>Loading: {isLoadingSchemes ? 'Yes' : 'No'}</div>
+            <div>Profile: {userProfile ? 'Yes' : 'No'}</div>
+          </div>
+        )}
         <SimpleCTASection />
       </main>
       <SimpleFooter />
+      </div>
     </div>
   );
 }

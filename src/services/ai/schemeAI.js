@@ -1,41 +1,19 @@
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+import { BaseAI } from './baseAI.js';
 
-export class SchemeAI {
+export class SchemeAI extends BaseAI {
   static async callAPI(prompt, systemPrompt, language = 'en') {
     const langInstruction = language === 'hi' 
       ? 'Respond in Hindi (Devanagari script). All text, descriptions, and explanations must be in Hindi.'
       : 'Respond in English.';
     
-    const fullSystemPrompt = `${systemPrompt}\n\nIMPORTANT: ${langInstruction}`;
+    const fullSystemPrompt = `${systemPrompt}\n\nIMPORTANT: ${langInstruction}\n\nCurrent Date: ${new Date().toISOString().split('T')[0]}\nUse only ACTIVE government schemes from 2024. Verify scheme status and provide accurate, up-to-date information.`;
     
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Sahai.ai'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-flash-1.5',
-        messages: [
-          { role: 'system', content: fullSystemPrompt },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.1,
-        max_tokens: 3000
-      })
-    });
-
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content;
+    return super.callAPI(prompt, fullSystemPrompt);
   }
 
   static async analyzeDocument(documentText, language = 'en') {
-    const systemPrompt = `Extract user profile from document. Return ONLY valid JSON:
+    try {
+      const systemPrompt = `Extract user profile from document. Return ONLY valid JSON:
 {
   "name": "string or null",
   "age": number or null,
@@ -55,108 +33,231 @@ export class SchemeAI {
   "aadhaarCard": boolean or null
 }`;
 
-    const response = await this.callAPI(`Extract profile: "${documentText}"`, systemPrompt, language);
-    return this.parseJSON(response);
+      const response = await this.callAPI(`Extract profile: "${documentText}"`, systemPrompt, language);
+      const profile = this.parseJSON(response);
+      
+      if (profile && typeof profile === 'object') {
+        return profile;
+      }
+    } catch (error) {
+      // API disabled - using fallback
+    }
+    
+    // Fallback: basic text analysis
+    return this.extractBasicProfile(documentText);
+  }
+  
+  static extractBasicProfile(text) {
+    const profile = {
+      name: null,
+      age: null,
+      location: { state: null, district: null },
+      occupation: null,
+      annualIncome: null,
+      category: 'General',
+      gender: null,
+      confidence: 50
+    };
+    
+    // Basic pattern matching
+    const nameMatch = text.match(/name[:\s]+([a-zA-Z\s]+)/i);
+    if (nameMatch) profile.name = nameMatch[1].trim();
+    
+    const ageMatch = text.match(/age[:\s]+(\d+)/i);
+    if (ageMatch) profile.age = parseInt(ageMatch[1]);
+    
+    const incomeMatch = text.match(/income[:\s]+[₹]?([\d,]+)/i);
+    if (incomeMatch) profile.annualIncome = parseInt(incomeMatch[1].replace(/,/g, ''));
+    
+    return profile;
   }
 
   static async findSchemes(userProfile, language = 'en') {
-    const systemPrompt = `Find eligible Indian government schemes. Return JSON array:
+    try {
+      const systemPrompt = `You are a government scheme researcher. Your task:
+1. Search https://www.myscheme.gov.in/search using filters for user profile
+2. Apply filters: State=${userProfile.location?.state}, Category based on profile, Income range
+3. For each matching scheme, verify on Google if it's active in 2024
+4. Calculate eligibility based on user profile
+5. Return only verified, relevant schemes
+
+Return JSON array with eligibility analysis:
 [{
-  "id": "unique_id",
-  "title": "Scheme Name",
-  "description": "Brief description",
+  "id": "scheme_code",
+  "title": "Official Scheme Name",
+  "description": "Detailed description",
   "amount": "Benefit amount",
-  "category": "Agriculture|Education|Health|Employment|Housing|Social Security",
-  "state": "State or Central",
-  "eligibilityUrl": "URL",
-  "applicationUrl": "URL",
-  "isEligible": true/false/null,
-  "eligibilityReason": "Detailed reason",
-  "requirements": ["req1", "req2"],
-  "benefits": ["benefit1", "benefit2"],
-  "lastUpdated": "2024-01-01"
+  "category": "Relevant category",
+  "level": "Central|State",
+  "ministry": "Implementing ministry",
+  "eligibilityUrl": "Official URL",
+  "applicationUrl": "Application URL",
+  "helplineNumber": "Contact number",
+  "isEligible": "eligible|not_eligible|partially_eligible",
+  "eligibilityScore": 0-100,
+  "eligibilityReason": "Detailed explanation",
+  "requirements": ["Required documents"],
+  "benefits": ["List of benefits"],
+  "applicationProcess": ["Steps to apply"],
+  "lastUpdated": "2024-MM-DD",
+  "schemeStatus": "Active",
+  "verificationSource": "myscheme.gov.in + Google verification"
 }]`;
 
-    const response = await this.callAPI(`Profile: ${JSON.stringify(userProfile)}`, systemPrompt, language);
-    const schemes = this.parseJSON(response);
-    return Array.isArray(schemes) ? schemes : [];
+      const contextPrompt = `Search myscheme.gov.in for schemes matching:
+- State: ${userProfile.location?.state}
+- Age: ${userProfile.age}, Gender: ${userProfile.gender}
+- Income: ₹${userProfile.annualIncome} annually
+- Category: ${userProfile.category}
+- Occupation: ${userProfile.occupation}
+- Education: ${userProfile.educationLevel}
+- Land ownership: ${userProfile.landOwnership}
+- BPL Status: ${userProfile.isBPL}
+
+Use myscheme.gov.in filters, then verify each scheme on Google for 2024 status. Calculate eligibility scores based on profile match.`;
+
+      const response = await this.callAPI(contextPrompt, systemPrompt, language);
+      const schemes = this.parseJSON(response);
+      
+      if (Array.isArray(schemes) && schemes.length > 0) {
+        return schemes;
+      }
+    } catch (error) {
+      console.error('AI API failed for scheme finding:', error);
+    }
+    
+    return [];
   }
 
   static async getPopularSchemes(language = 'en') {
-    const systemPrompt = `Return new top 10 popular Indian government schemes which is not end as JSON array. Include detailed descriptions, proper government URLs, requirements, and benefits:
-[{
-  "id": "unique_id",
-  "title": "Full Official Scheme Name",
-  "description": "Detailed description with eligibility and benefits",
-  "amount": "Specific benefit amount with details",
-  "category": "Agriculture|Education|Health|Employment|Housing|Social Security",
-  "state": "Central",
-  "eligibilityUrl": "Official .gov.in eligibility check URL",
-  "applicationUrl": "Official .gov.in application URL",
-  "isEligible": null,
-  "eligibilityReason": "Profile analysis needed for eligibility",
-  "requirements": ["specific requirement 1", "specific requirement 2"],
-  "benefits": ["specific benefit 1", "specific benefit 2"],
-  "lastUpdated": "2024-01-01"
-}]`;
-    
-    const response = await this.callAPI('List popular schemes: PM-KISAN, PMAY, Ayushman Bharat, MGNREGA, PM-SBY, Ujjwala, Mudra, Kisan Credit Card, Sukanya Samriddhi, APY', systemPrompt, language);
-    const schemes = this.parseJSON(response);
-    return Array.isArray(schemes) && schemes.length > 0 ? schemes : this.getDefaultSchemes();
-  }
-
-  static getDefaultSchemes() {
-    return [
-      {
-        id: 'pmkisan',
-        title: 'PM-KISAN Samman Nidhi Yojana',
-        description: 'Direct income support of ₹6,000 per year to small and marginal farmers in three equal installments of ₹2,000 each. Covers all landholding farmers subject to certain exclusions.',
-        amount: '₹6,000 per year (₹2,000 per installment)',
-        category: 'Agriculture',
-        state: 'Central',
-        isEligible: null,
-        eligibilityUrl: 'https://pmkisan.gov.in/StaticPages/Benificiaries.aspx',
-        applicationUrl: 'https://pmkisan.gov.in/RegistrationForm.aspx',
-        requirements: ['Land ownership documents', 'Aadhaar card', 'Bank account details'],
-        benefits: ['Direct cash transfer', 'Financial security', 'Agricultural investment support'],
-        lastUpdated: '2024-01-01'
-      },
-      {
-        id: 'pmay',
-        title: 'Pradhan Mantri Awas Yojana (Urban)',
-        description: 'Housing for All mission providing affordable housing to urban poor. Offers credit-linked subsidy, affordable housing in partnership, and beneficiary-led individual house construction.',
-        amount: 'Up to ₹2.67 lakh subsidy',
-        category: 'Housing',
-        state: 'Central',
-        isEligible: null,
-        eligibilityUrl: 'https://pmaymis.gov.in/Open/Find_Beneficiary_Details',
-        applicationUrl: 'https://pmaymis.gov.in/',
-        requirements: ['Income certificate', 'Property documents', 'Aadhaar card', 'Bank account'],
-        benefits: ['Interest subsidy on home loans', 'Affordable housing', 'Infrastructure development'],
-        lastUpdated: '2024-01-01'
-      }
-      
-    ];
-  }
-
-  static parseJSON(response) {
     try {
-      let clean = response.trim();
-      if (clean.startsWith('```json')) clean = clean.replace(/```json\n?/, '').replace(/```\s*$/, '');
+      const systemPrompt = `You are a government scheme researcher. Your task:
+1. Search https://www.myscheme.gov.in/search for current active schemes
+2. Verify each scheme on Google to confirm it's recent and active in 2024
+3. Return only verified, current schemes
+
+Return JSON array:
+[{
+  "id": "scheme_code",
+  "title": "Official Scheme Name",
+  "description": "Detailed description",
+  "amount": "Benefit amount",
+  "category": "Agriculture|Health|Education|Employment|Housing|Social Security",
+  "level": "Central|State",
+  "ministry": "Implementing ministry",
+  "eligibilityUrl": "Official URL",
+  "applicationUrl": "Application URL",
+  "helplineNumber": "Contact number",
+  "requirements": ["Required documents"],
+  "benefits": ["List of benefits"],
+  "applicationProcess": ["Steps to apply"],
+  "lastUpdated": "2024-MM-DD",
+  "schemeStatus": "Active",
+  "verificationSource": "myscheme.gov.in + Google verification"
+}]`;
       
-      const arrayStart = clean.indexOf('[');
-      const objectStart = clean.indexOf('{');
+      const response = await this.callAPI(`Search myscheme.gov.in for popular active schemes in 2024. Use filters for:
+- Central Government schemes
+- State schemes for major states (Maharashtra, UP, Karnataka, Tamil Nadu, Gujarat)
+- Categories: Agriculture, Health, Education, Employment, Housing, Social Security
+
+For each scheme found:
+1. Extract details from myscheme.gov.in
+2. Google search "[scheme name] 2024 active status" to verify
+3. Only include if verified as active in 2024
+
+Focus on high-impact schemes like PM-KISAN, Ayushman Bharat, PMAY, MGNREGA, etc.`, systemPrompt, language);
+      const schemes = this.parseJSON(response);
       
-      if (arrayStart !== -1 && (objectStart === -1 || arrayStart < objectStart)) {
-        clean = clean.substring(arrayStart, clean.lastIndexOf(']') + 1);
-      } else if (objectStart !== -1) {
-        clean = clean.substring(objectStart, clean.lastIndexOf('}') + 1);
+      if (Array.isArray(schemes) && schemes.length > 0) {
+        return schemes;
+      }
+    } catch (error) {
+      console.error('AI API failed for popular schemes:', error);
+    }
+    
+    return [];
+  }
+
+
+  
+  static enhanceSchemeData(schemes, userProfile) {
+    return schemes.map(scheme => {
+      const enhanced = { ...scheme };
+      
+      let score = 0;
+      let eligible = 'not_eligible';
+      let reason = 'Profile analysis needed';
+      
+      if (userProfile) {
+        // Agriculture schemes
+        if (scheme.category === 'Agriculture' && userProfile.landOwnership === 'Yes') {
+          score += 40;
+          if (userProfile.occupation?.toLowerCase().includes('farm')) score += 30;
+          if (userProfile.annualIncome < 200000) score += 20;
+          if (userProfile.aadhaarCard) score += 10;
+        }
+        
+        // Health schemes
+        if (scheme.category === 'Health') {
+          if (userProfile.isBPL || userProfile.annualIncome < 500000) score += 50;
+          if (userProfile.category !== 'General') score += 20;
+          if (userProfile.aadhaarCard) score += 20;
+          if (userProfile.familySize > 4) score += 10;
+        }
+        
+        // Housing schemes
+        if (scheme.category === 'Housing') {
+          if (userProfile.housingType === 'Kutcha' || userProfile.housingType === 'Homeless') score += 60;
+          if (userProfile.annualIncome < 1800000) score += 30;
+          if (userProfile.gender === 'Female') score += 10;
+        }
+        
+        if (score >= 70) {
+          eligible = 'eligible';
+          reason = 'You meet most eligibility criteria for this scheme';
+        } else if (score >= 40) {
+          eligible = 'partially_eligible';
+          reason = 'You meet some criteria. Additional documentation may be required';
+        } else {
+          eligible = 'not_eligible';
+          reason = 'Current profile does not match scheme requirements';
+        }
       }
       
-      return JSON.parse(clean);
-    } catch (error) {
-      console.error('JSON Parse Error:', error);
-      return [];
-    }
+      enhanced.eligibilityScore = Math.min(score, 100);
+      enhanced.isEligible = eligible;
+      enhanced.eligibilityReason = reason;
+      
+      return enhanced;
+    });
+  }
+
+  // Real-time scheme search with filters
+  static async searchSchemes(query, filters = {}, language = 'en') {
+    const systemPrompt = `Search for Indian government schemes matching the query. Apply filters and return relevant schemes. Return JSON array with same structure as findSchemes method.`;
+    
+    const searchPrompt = `Search query: "${query}"\nFilters: ${JSON.stringify(filters)}\nFind matching active government schemes with high relevance.`;
+    
+    const response = await this.callAPI(searchPrompt, systemPrompt, language);
+    const schemes = this.parseJSON(response);
+    
+    return Array.isArray(schemes) ? schemes : this.filterSchemes(query, filters);
+  }
+  
+  static filterSchemes(query, filters) {
+    return [];
+  }
+  
+  // Get scheme details by ID
+  static async getSchemeDetails(schemeId, language = 'en') {
+    const systemPrompt = `Provide comprehensive details for the government scheme with ID: ${schemeId}. Include all available information, recent updates, and application guidance.`;
+    
+    const response = await this.callAPI(`Get detailed information for scheme ID: ${schemeId}`, systemPrompt, language);
+    return this.parseJSON(response) || this.getSchemeById(schemeId);
+  }
+  
+  static getSchemeById(schemeId) {
+    return null;
   }
 }
