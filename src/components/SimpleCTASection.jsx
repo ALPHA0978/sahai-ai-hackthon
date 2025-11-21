@@ -51,11 +51,11 @@ const SimpleCTASection = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8 pt-4">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 rounded-full bg-green-400"></div>
-              <span className="text-white text-sm font-medium">50,000+ Users Trust Us</span>
+              <span className="text-white text-sm font-medium">51+ Users Trust Us</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-              <span className="text-white text-sm font-medium">99% Success Rate</span>
+              <span className="text-white text-sm font-medium">92% Success Rate</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 rounded-full bg-blue-400"></div>

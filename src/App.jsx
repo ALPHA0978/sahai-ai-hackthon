@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import WelcomeCarousel from './components/WelcomeCarousel';
+
 import ModernHeader from './components/ModernHeader';
 import ModernHero from './components/ModernHero';
 import ModernUploadSection from './components/ModernUploadSection';
@@ -7,6 +7,8 @@ import SimpleResultsSection from './components/SimpleResultsSection';
 import SimpleCTASection from './components/SimpleCTASection';
 import SimpleFooter from './components/SimpleFooter';
 import SimpleSDGPlatform from './sdg/SimpleSDGPlatform';
+import AIAnalysisPage from './pages/AIAnalysisPage';
+import SchemesPage from './pages/SchemesPage';
 import { OpenRouterService } from './services/api/openRouterService';
 import { DataService } from './services/dataService';
 import { useAuth } from './auth';
@@ -22,8 +24,8 @@ function AppContent() {
   const [schemes, setSchemes] = useState([]);
   const [isLoadingSchemes, setIsLoadingSchemes] = useState(false);
   const [error, setError] = useState(null);
-  const [currentView, setCurrentView] = useState('main'); // 'main' or 'sdg'
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [currentView, setCurrentView] = useState('main'); // 'main', 'sdg', 'analysis', or 'schemes'
+  const [showWelcome, setShowWelcome] = useState(false);
   const uploadSectionRef = useRef(null);
   const isInitialLoadRef = useRef(false);
   const { user } = useAuth();
@@ -157,14 +159,15 @@ function AppContent() {
   };
 
   const handleStartScan = () => {
-    uploadSectionRef.current?.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
-    });
+    setCurrentView('analysis');
   };
 
   const handleNavigateToSDG = () => {
     setCurrentView('sdg');
+  };
+
+  const handleNavigateToSchemes = () => {
+    setCurrentView('schemes');
   };
 
   const handleBackToMain = () => {
@@ -175,33 +178,31 @@ function AppContent() {
     return <SimpleSDGPlatform onBack={handleBackToMain} />;
   }
 
+  if (currentView === 'analysis') {
+    return (
+      <AIAnalysisPage 
+        onBack={handleBackToMain}
+        userProfile={userProfile}
+        schemes={schemes}
+        isLoadingSchemes={isLoadingSchemes}
+        onSchemesFound={handleSchemesFound}
+      />
+    );
+  }
+
+  if (currentView === 'schemes') {
+    return <SchemesPage onBack={handleBackToMain} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {showWelcome && <WelcomeCarousel onContinue={() => setShowWelcome(false)} />}
-      <div className={showWelcome ? 'blur-sm pointer-events-none' : ''}>
       <ModernHeader />
       <main>
-        <ModernHero onStartScan={handleStartScan} onNavigateToSDG={handleNavigateToSDG} />
-        <div ref={uploadSectionRef}>
-          <ModernUploadSection onSchemesFound={handleSchemesFound} />
-        </div>
-        <SimpleResultsSection 
-          userProfile={userProfile} 
-          schemes={schemes} 
-          isLoading={isLoadingSchemes}
-        />
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{position: 'fixed', top: '10px', right: '10px', background: 'white', padding: '10px', border: '1px solid #ccc', fontSize: '12px'}}>
-            <div>Schemes: {schemes?.length || 0}</div>
-            <div>Loading: {isLoadingSchemes ? 'Yes' : 'No'}</div>
-            <div>Profile: {userProfile ? 'Yes' : 'No'}</div>
-          </div>
-        )}
+        <ModernHero onStartScan={handleStartScan} onNavigateToSDG={handleNavigateToSDG} onNavigateToSchemes={handleNavigateToSchemes} />
+
         <SimpleCTASection />
       </main>
       <SimpleFooter />
-      </div>
     </div>
   );
 }

@@ -6,13 +6,13 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
+const ModernHero = ({ onStartScan, onNavigateToSDG, onNavigateToSchemes }) => {
   const { t } = useLanguage();
   const [stats, setStats] = useState({
-    schemes: 1234,
-    users: 50000,
-    languages: 12,
-    success: 98
+    schemes: 'AI',
+    users: 51,
+    languages: 8,
+    success: 92
   });
 
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -133,14 +133,46 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.6 }}
             >
-              <button 
-                onClick={onStartScan}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Zap size={18} />
-                <span>{t('startAnalysis')}</span>
-                <ArrowRight size={18} />
-              </button>
+              <div className="relative group">
+                <button 
+                  onClick={onStartScan}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 w-full sm:w-auto"
+                >
+                  <Zap size={18} />
+                  <span>{t('startAnalysis')}</span>
+                  <ArrowRight size={18} />
+                </button>
+                
+                {/* Dropdown */}
+                <div className="absolute top-full left-0 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  <div className="p-2">
+                    <button 
+                      onClick={onNavigateToSchemes}
+                      className="w-full text-left px-4 py-3 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                    >
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Globe size={16} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Browse All Schemes</div>
+                        <div className="text-sm text-gray-500">Explore government schemes</div>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={onStartScan}
+                      className="w-full text-left px-4 py-3 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                    >
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Zap size={16} className="text-green-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">AI Scheme Researcher</div>
+                        <div className="text-sm text-gray-500">Find personalized schemes</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
               
               <button 
                 onClick={onNavigateToSDG}
@@ -159,8 +191,8 @@ const ModernHero = ({ onStartScan, onNavigateToSDG }) => {
               transition={{ delay: 0.9, duration: 0.6 }}
             >
               {[
-                { value: `${stats.schemes.toLocaleString()}+`, label: t('schemes') },
-                { value: `${(stats.users / 1000).toFixed(0)}K+`, label: t('users') },
+                { value: `${stats.schemes}+`, label: t('schemes') },
+                { value: `${stats.users}+`, label: t('users') },
                 { value: stats.languages, label: t('languages') },
                 { value: `${stats.success}%`, label: t('successRate') }
               ].map((stat, index) => (

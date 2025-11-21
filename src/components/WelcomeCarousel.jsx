@@ -13,7 +13,7 @@ const WelcomeCarousel = ({ onContinue }) => {
   const [showQR, setShowQR] = useState(false);
   
   const languages = [
-    { code: 'EN', name: 'English' },
+    { code: 'EN', name: '' },
     { code: 'HI', name: 'हिंदी' },
     { code: 'BN', name: 'বাংলা' },
     { code: 'TE', name: 'తెలుగు' },
@@ -121,8 +121,8 @@ const WelcomeCarousel = ({ onContinue }) => {
       <div className="text-center">
         {/* Logo */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Sahai.ai</h1>
-          <p className="text-xl text-white/90">Your Rights, In Your Language, In Seconds</p>
+          <h1 className="text-4xl font-bold text-white mb-2"></h1>
+          <p className="text-xl text-white/90"></p>
         </div>
 
         {/* Carousel */}
@@ -201,7 +201,7 @@ const WelcomeCarousel = ({ onContinue }) => {
         </div>
 
         {/* Swipe instruction */}
-        <p className="mt-6 text-white/80 text-sm">Swipe to explore all options</p>
+        <p className="mt-6 text-white/80 text-sm"></p>
       </div>
 
       {/* QR Modal */}

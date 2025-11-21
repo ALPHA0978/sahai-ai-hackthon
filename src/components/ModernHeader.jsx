@@ -50,7 +50,7 @@ const ModernHeader = () => {
   };
 
   const languages = [
-    { code: 'EN', name: 'English' },
+    { code: 'EN', name: '' },
     { code: 'HI', name: 'हिंदी' },
     { code: 'BN', name: 'বাংলা' },
     { code: 'TE', name: 'తెలుగు' },
@@ -89,10 +89,10 @@ const ModernHeader = () => {
               </div>
               <div>
                 <span className="font-bold text-xl text-blue-600">
-                  Sahai.ai
+                  
                 </span>
                 <div className="text-xs text-gray-500">
-                  Government Schemes
+                  AI + SDG Platform
                 </div>
               </div>
             </div>

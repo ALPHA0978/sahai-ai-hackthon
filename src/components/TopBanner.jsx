@@ -7,7 +7,7 @@ const WelcomeScreen = ({ onContinue }) => {
   const { currentLanguage, changeLanguage } = useLanguage();
 
   const languages = [
-    { code: 'EN', name: 'English' },
+    { code: 'EN', name: '' },
     { code: 'HI', name: 'हिंदी' },
     { code: 'BN', name: 'বাংলা' },
     { code: 'TE', name: 'తెలుగు' },
@@ -25,8 +25,8 @@ const WelcomeScreen = ({ onContinue }) => {
         
         {/* Logo/Title */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Sahai.ai</h1>
-          <p className="text-xl opacity-90">Your Rights, In Your Language, In Seconds</p>
+          <h1 className="text-4xl font-bold mb-2"></h1>
+          <p className="text-xl opacity-90"></p>
         </div>
 
         {/* Language Selector */}

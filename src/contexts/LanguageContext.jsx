@@ -16,7 +16,7 @@ const translations = {
     heroDescription: "Advanced AI platform that analyzes your documents, understands your needs, discovers hidden benefits, provides personalized recommendations, and guides you through applications - all in your language.",
     startAnalysis: "Start AI Analysis",
     exploreTools: "Explore AI Tools",
-    trustedUsers: "Trusted by 50,000+ users",
+    trustedUsers: "Trusted by 51+ users",
     
     // Features
     smartDocumentAI: "Smart Document AI",
@@ -53,7 +53,7 @@ const translations = {
     // CTA Section
     readyToStart: "Ready to Get Started?",
     experienceAI: "Experience AI-Powered Governance",
-    ctaDescription: "Advanced AI analyzes your profile in under 30 seconds, discovers hidden benefits, and provides personalized guidance. Join 50,000+ users leveraging AI for their rights!",
+    ctaDescription: "Advanced AI analyzes your profile in under 30 seconds, discovers hidden benefits, and provides personalized guidance. Join 51+ users leveraging AI for their rights!",
     learnMore: "Learn More",
     aiPoweredAnalysis: "AI-Powered Analysis",
     aiAnalysisDesc: "Advanced machine learning models",
@@ -103,7 +103,7 @@ const translations = {
     heroDescription: "उन्नत AI प्लेटफॉर्म जो आपके दस्तावेजों का विश्लेषण करता है, आपकी जरूरतों को समझता है, छुपे हुए लाभ खोजता है, व्यक्तिगत सिफारिशें प्रदान करता है, और आवेदनों के माध्यम से मार्गदर्शन करता है - सब आपकी भाषा में।",
     startAnalysis: "AI विश्लेषण शुरू करें",
     exploreTools: "AI टूल्स एक्सप्लोर करें",
-    trustedUsers: "50,000+ उपयोगकर्ताओं द्वारा भरोसेमंद",
+    trustedUsers: "51+ उपयोगकर्ताओं द्वारा भरोसेमंद",
     
     // Features
     smartDocumentAI: "स्मार्ट दस्तावेज़ AI",
@@ -140,7 +140,7 @@ const translations = {
     // CTA Section
     readyToStart: "शुरू करने के लिए तैयार?",
     experienceAI: "AI-संचालित शासन का अनुभव करें",
-    ctaDescription: "उन्नत AI 30 सेकंड से कम में आपकी प्रोफ़ाइल का विश्लेषण करता है, छुपे हुए लाभ खोजता है, और व्यक्तिगत मार्गदर्शन प्रदान करता है। अपने अधिकारों के लिए AI का लाभ उठाने वाले 50,000+ उपयोगकर्ताओं से जुड़ें!",
+    ctaDescription: "उन्नत AI 30 सेकंड से कम में आपकी प्रोफ़ाइल का विश्लेषण करता है, छुपे हुए लाभ खोजता है, और व्यक्तिगत मार्गदर्शन प्रदान करता है। अपने अधिकारों के लिए AI का लाभ उठाने वाले 51+ उपयोगकर्ताओं से जुड़ें!",
     learnMore: "और जानें",
     aiPoweredAnalysis: "AI-संचालित विश्लेषण",
     aiAnalysisDesc: "उन्नत मशीन लर्निंग मॉडल",
