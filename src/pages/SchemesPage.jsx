@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Filter, Search, ChevronDown } from 'lucide-react';
-import ModernHeader from '../components/ModernHeader';
 import { OpenRouterServiceExtended } from '../services/mySchemeService';
 
-const SchemesPage = ({ onBack }) => {
+const SchemesPage = () => {
   const [schemes, setSchemes] = useState([]);
   const [filteredSchemes, setFilteredSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +16,7 @@ const SchemesPage = ({ onBack }) => {
     employmentStatus: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadSchemes();
@@ -72,15 +73,19 @@ const SchemesPage = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ModernHeader />
-      
+    <div className="pt-20">
       {/* Government Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button onClick={onBack} className="flex items-center space-x-2 text-blue-600">
+              <button 
+                onClick={() => {
+                  console.log('SchemesPage: Back button clicked');
+                  navigate(-1);
+                }}
+                className="flex items-center space-x-2 text-blue-600 cursor-pointer bg-white px-4 py-2 rounded-lg shadow-sm border"
+              >
                 <ArrowLeft size={20} />
                 <span>Back</span>
               </button>

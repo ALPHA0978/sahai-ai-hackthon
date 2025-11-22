@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 
 import ModernHeader from './components/ModernHeader';
 import ModernHero from './components/ModernHero';
-import ModernUploadSection from './components/ModernUploadSection';
-import SimpleResultsSection from './components/SimpleResultsSection';
 import SimpleCTASection from './components/SimpleCTASection';
 import SimpleFooter from './components/SimpleFooter';
 import SimpleSDGPlatform from './sdg/SimpleSDGPlatform';
 import AIAnalysisPage from './pages/AIAnalysisPage';
 import SchemesPage from './pages/SchemesPage';
+import ProfileSetupPage from './pages/ProfileSetupPage';
+import DashboardPage from './pages/DashboardPage';
+import LoginPage from './auth/components/LoginPage';
 import { OpenRouterService } from './services/api/openRouterService';
 import { DataService } from './services/dataService';
 import { useAuth } from './auth';
@@ -19,18 +21,33 @@ import { useTranslation } from 'react-i18next';
 import './styles/simple-theme.css';
 import './App.css';
 
+// Home Page Component
+function HomePage({ userProfile, schemes, isLoadingSchemes, onStartScan, onNavigateToSDG, onNavigateToSchemes }) {
+  return (
+    <main>
+      <ModernHero 
+        userProfile={userProfile}
+        onStartScan={onStartScan} 
+        onNavigateToSDG={onNavigateToSDG} 
+        onNavigateToSchemes={onNavigateToSchemes} 
+      />
+      <SimpleCTASection />
+    </main>
+  );
+}
+
 function AppContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [schemes, setSchemes] = useState([]);
   const [isLoadingSchemes, setIsLoadingSchemes] = useState(false);
   const [error, setError] = useState(null);
-  const [currentView, setCurrentView] = useState('main'); // 'main', 'sdg', 'analysis', or 'schemes'
   const [showWelcome, setShowWelcome] = useState(false);
-  const uploadSectionRef = useRef(null);
   const isInitialLoadRef = useRef(false);
   const { user } = useAuth();
   const { i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isInitialLoadRef.current && !showWelcome) {
@@ -53,14 +70,17 @@ function AppContent() {
     }
   }, [user]);
 
+
+
+
   const loadInitialData = async () => {
-    if (showWelcome) return; // Don't load until welcome screen is closed
+    if (showWelcome) return; 
     
     setIsLoadingSchemes(true);
     setError(null);
     
     try {
-      // Fetch schemes from AI in selected language
+      
       const langCode = i18n.language?.toLowerCase() || 'en';
       console.log('Loading schemes in language:', langCode);
       const popularSchemes = await OpenRouterService.getPopularSchemes(langCode);
@@ -85,13 +105,13 @@ function AppContent() {
     if (!user) return;
     
     try {
-      // Load user profile
+     
       const savedProfile = await DataService.getUserProfile(user.uid);
       if (savedProfile) {
         setUserProfile(savedProfile);
       }
       
-      // Load cached schemes
+     
       const cachedSchemes = await DataService.getCachedSchemes(user.uid);
       if (cachedSchemes) {
         setSchemes(cachedSchemes);
@@ -107,7 +127,7 @@ function AppContent() {
     setError(null);
     
     try {
-      // Save user profile if logged in
+     
       if (user) {
         await DataService.saveUserProfile(user.uid, profile);
         await DataService.logUserAction(user.uid, 'profile_analyzed', { profile });
@@ -115,14 +135,13 @@ function AppContent() {
       
       let schemesToUse = foundSchemes;
       
-      // If schemes weren't provided, fetch them
+     
       if (!schemesToUse) {
         console.log('🔍 Finding schemes for profile:', profile);
         const langCode = i18n.language?.toLowerCase() || 'en';
         schemesToUse = await OpenRouterService.findSchemes(profile, langCode);
         console.log('✅ AI returned schemes:', schemesToUse?.length || 0, 'schemes');
-        
-        // If still no schemes, set empty array
+       
         if (!schemesToUse || schemesToUse.length === 0) {
           schemesToUse = [];
           console.log('🔄 No schemes found');
@@ -138,12 +157,12 @@ function AppContent() {
         console.log('⚠️ No schemes found, keeping existing schemes');
       }
       
-      // Cache schemes if user is logged in
+    
       if (user && schemesToUse?.length > 0) {
         await DataService.cacheSchemes(user.uid, schemesToUse);
       }
       
-      // Save to localStorage for offline access
+      
       if (schemesToUse?.length > 0) {
         DataService.saveToLocalStorage('last_schemes', schemesToUse);
       }
@@ -158,64 +177,97 @@ function AppContent() {
     }
   };
 
+  // Navigation functions using React Router
   const handleStartScan = () => {
-    setCurrentView('analysis');
+    console.log('🔄 Navigating to analysis');
+    navigate('/analysis');
   };
-
+  
   const handleNavigateToSDG = () => {
-    setCurrentView('sdg');
+    console.log('🔄 Navigating to SDG');
+    navigate('/sdg');
   };
-
+  
   const handleNavigateToSchemes = () => {
-    setCurrentView('schemes');
+    console.log('🔄 Navigating to schemes');
+    navigate('/schemes');
   };
+  
 
-  const handleBackToMain = () => {
-    setCurrentView('main');
-  };
 
-  if (currentView === 'sdg') {
-    return <SimpleSDGPlatform onBack={handleBackToMain} />;
-  }
-
-  if (currentView === 'analysis') {
-    return (
-      <AIAnalysisPage 
-        onBack={handleBackToMain}
-        userProfile={userProfile}
-        schemes={schemes}
-        isLoadingSchemes={isLoadingSchemes}
-        onSchemesFound={handleSchemesFound}
-      />
-    );
-  }
-
-  if (currentView === 'schemes') {
-    return <SchemesPage onBack={handleBackToMain} />;
-  }
+  // Debug current route
+  useEffect(() => {
+    console.log('Current route:', location.pathname);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      <ModernHeader />
-      <main>
-        <ModernHero onStartScan={handleStartScan} onNavigateToSDG={handleNavigateToSDG} onNavigateToSchemes={handleNavigateToSchemes} />
-
-        <SimpleCTASection />
-      </main>
-      <SimpleFooter />
+      
+      {location.pathname !== '/dashboard' && <ModernHeader />}
+      
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            <HomePage 
+              userProfile={userProfile}
+              schemes={schemes}
+              isLoadingSchemes={isLoadingSchemes}
+              onStartScan={handleStartScan}
+              onNavigateToSDG={handleNavigateToSDG}
+              onNavigateToSchemes={handleNavigateToSchemes}
+            />
+          } 
+        />
+        <Route 
+          path="/analysis" 
+          element={
+            <AIAnalysisPage 
+              userProfile={userProfile}
+              schemes={schemes}
+              isLoadingSchemes={isLoadingSchemes}
+              onSchemesFound={handleSchemesFound}
+            />
+          } 
+        />
+        <Route 
+          path="/sdg" 
+          element={<SimpleSDGPlatform />} 
+        />
+        <Route 
+          path="/schemes" 
+          element={<SchemesPage />} 
+        />
+        <Route 
+          path="/profile-setup" 
+          element={<ProfileSetupPage />} 
+        />
+        <Route 
+          path="/dashboard" 
+          element={user ? <DashboardPage /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to="/dashboard" replace /> : <LoginPage isOpen={true} onClose={() => navigate('/')} />} 
+        />
+      </Routes>
+      
+      {location.pathname !== '/dashboard' && <SimpleFooter />}
     </div>
   );
 }
 
 function App() {
   return (
-    <LanguageProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </ThemeProvider>
-    </LanguageProvider>
+    <Router>
+      <LanguageProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </Router>
   );
 }
 

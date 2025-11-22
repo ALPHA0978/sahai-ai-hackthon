@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { DataService } from '../../services/dataService';
 
 const LoginForm = ({ isSignUp, onToggleMode, onClose }) => {
   const { login, signup, loginWithGoogle, error, setError } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,6 +14,20 @@ const LoginForm = ({ isSignUp, onToggleMode, onClose }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const checkAndRedirectUser = async (user) => {
+    try {
+      const profile = await DataService.getUserProfile(user.uid);
+      if (profile && profile.isComplete) {
+        navigate('/');
+      } else {
+        navigate('/profile-setup');
+      }
+    } catch (error) {
+      console.error('Error checking profile:', error);
+      navigate('/profile-setup');
+    }
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,12 +58,14 @@ const LoginForm = ({ isSignUp, onToggleMode, onClose }) => {
     }
 
     try {
+      let user;
       if (isSignUp) {
-        await signup(formData.email.trim(), formData.password, formData.name.trim());
+        user = await signup(formData.email.trim(), formData.password, formData.name.trim());
       } else {
-        await login(formData.email.trim(), formData.password);
+        user = await login(formData.email.trim(), formData.password);
       }
       onClose();
+      await checkAndRedirectUser(user);
     } catch (error) {
       // Error is already set in the auth context
       console.error('Auth error:', error);
@@ -58,8 +77,9 @@ const LoginForm = ({ isSignUp, onToggleMode, onClose }) => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      await loginWithGoogle();
+      const user = await loginWithGoogle();
       onClose();
+      await checkAndRedirectUser(user);
     } catch (error) {
       console.error('Google auth error:', error);
     } finally {

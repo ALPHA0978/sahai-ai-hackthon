@@ -9,6 +9,7 @@ import { LoginPage } from '../auth';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { DataService } from '../services/dataService';
+import UserProfile from './UserProfile';
 
 const ModernHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,6 +17,7 @@ const ModernHeader = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -190,6 +192,16 @@ const ModernHeader = () => {
                     {showUserMenu && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                         <div className="p-2">
+                          <button 
+                            onClick={() => {
+                              setShowProfile(true);
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
+                          >
+                            <User size={16} />
+                            <span>My Profile</span>
+                          </button>
                           <button className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700">
                             <Settings size={16} />
                             <span>{t('settings')}</span>
@@ -336,6 +348,12 @@ const ModernHeader = () => {
       <LoginPage 
         isOpen={showLoginPage}
         onClose={() => setShowLoginPage(false)}
+      />
+
+      {/* Profile Modal */}
+      <UserProfile 
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
       />
 
       {/* Click outside to close menus */}

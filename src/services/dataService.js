@@ -19,15 +19,41 @@ export class DataService {
   static async saveUserProfile(userId, profile) {
     try {
       const userRef = doc(db, 'users', userId);
+      const existingProfile = await this.getUserProfile(userId);
+      
       await setDoc(userRef, {
         ...profile,
         updatedAt: serverTimestamp(),
-        createdAt: serverTimestamp()
+        createdAt: existingProfile?.createdAt || serverTimestamp()
       }, { merge: true });
       
       return true;
     } catch (error) {
       console.error('Error saving user profile:', error);
+      throw error;
+    }
+  }
+
+  static async isProfileComplete(userId) {
+    try {
+      const profile = await this.getUserProfile(userId);
+      return profile && profile.isComplete === true;
+    } catch (error) {
+      console.error('Error checking profile completion:', error);
+      return false;
+    }
+  }
+
+  static async updateProfileField(userId, field, value) {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        [field]: value,
+        updatedAt: serverTimestamp()
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating profile field:', error);
       throw error;
     }
   }

@@ -1,25 +1,27 @@
 import { useRef } from 'react';
-import ModernHeader from '../components/ModernHeader';
+import { useNavigate } from 'react-router-dom';
 import ModernUploadSection from '../components/ModernUploadSection';
 import SimpleResultsSection from '../components/SimpleResultsSection';
-import SimpleFooter from '../components/SimpleFooter';
 import { ArrowLeft } from 'lucide-react';
 
-const AIAnalysisPage = ({ onBack, userProfile, schemes, isLoadingSchemes, onSchemesFound }) => {
+const AIAnalysisPage = ({ userProfile, schemes, isLoadingSchemes, onSchemesFound }) => {
   const uploadSectionRef = useRef(null);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ModernHeader />
-      <main className="pt-16">
+      <main className="pt-20">
         {/* Back Button */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button 
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            onClick={() => {
+              console.log('AIAnalysisPage: Back button clicked');
+              navigate(-1);
+            }}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors cursor-pointer bg-white px-4 py-2 rounded-lg shadow-sm border"
           >
             <ArrowLeft size={20} />
-            <span>Back to Home</span>
+            <span>Back</span>
           </button>
         </div>
 
@@ -35,7 +37,6 @@ const AIAnalysisPage = ({ onBack, userProfile, schemes, isLoadingSchemes, onSche
           isLoading={isLoadingSchemes}
         />
       </main>
-      <SimpleFooter />
     </div>
   );
 };

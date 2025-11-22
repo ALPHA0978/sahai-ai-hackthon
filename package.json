@@ -23,6 +23,7 @@
     "react-dropzone": "^14.2.3",
     "react-hot-toast": "^2.4.1",
     "react-i18next": "^15.7.2",
+    "react-router-dom": "^7.9.6",
     "tesseract.js": "^5.0.0"
   },
   "devDependencies": {
