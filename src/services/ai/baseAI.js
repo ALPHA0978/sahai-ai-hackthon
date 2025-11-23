@@ -4,28 +4,65 @@ const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // Validate API keys
+console.log('API Keys Status:', {
+  openRouter: OPENROUTER_API_KEY ? 'Available' : 'Missing',
+  gemini: GEMINI_API_KEY ? 'Available' : 'Missing'
+});
+
 if (!OPENROUTER_API_KEY && !GEMINI_API_KEY) {
   console.warn('No AI API keys found. Using fallback responses.');
 }
 
 export class BaseAI {
   static async callAPI(prompt, systemPrompt) {
+    console.log('BaseAI.callAPI called with:', { prompt: prompt.substring(0, 100), systemPrompt: systemPrompt.substring(0, 100) });
+    
+    if (!OPENROUTER_API_KEY && !GEMINI_API_KEY) {
+      console.log('No API keys available, using fallback');
+      return this.getFallbackResponse(prompt, systemPrompt);
+    }
+    
     try {
-      return await this.callOpenRouter(prompt, systemPrompt);
+      console.log('Trying OpenRouter API...');
+      const result = await this.callOpenRouter(prompt, systemPrompt);
+      console.log('OpenRouter success:', result.substring(0, 100));
+      return result;
     } catch (error) {
       console.error('OpenRouter failed, trying Gemini:', error);
       try {
-        return await this.callGemini(prompt, systemPrompt);
+        console.log('Trying Gemini API...');
+        const result = await this.callGemini(prompt, systemPrompt);
+        console.log('Gemini success:', result.substring(0, 100));
+        return result;
       } catch (geminiError) {
         console.error('Both APIs failed:', { openRouter: error, gemini: geminiError });
-        // Return a fallback response based on the prompt context
+        console.log('Using fallback response');
         return this.getFallbackResponse(prompt, systemPrompt);
       }
     }
   }
   
   static getFallbackResponse(prompt, systemPrompt) {
-    // Provide contextual fallback responses
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // SDG Assistant responses
+    if (systemPrompt.includes('SDG') || systemPrompt.includes('Sustainable Development')) {
+      if (lowerPrompt.includes('what are') && lowerPrompt.includes('sdg')) {
+        return 'The 17 Sustainable Development Goals (SDGs) are a universal call to action adopted by the United Nations in 2015. They aim to end poverty, protect the planet, and ensure peace and prosperity for all by 2030. The goals include: No Poverty, Zero Hunger, Good Health, Quality Education, Gender Equality, Clean Water, Affordable Energy, Decent Work, Industry Innovation, Reduced Inequalities, Sustainable Cities, Responsible Consumption, Climate Action, Life Below Water, Life on Land, Peace and Justice, and Partnerships for the Goals.';
+      }
+      if (lowerPrompt.includes('climate')) {
+        return 'Climate Action (SDG 13) focuses on taking urgent action to combat climate change and its impacts. You can help by: reducing energy consumption, using renewable energy, supporting sustainable transportation, advocating for climate policies, participating in tree planting, reducing waste, and supporting organizations working on climate solutions.';
+      }
+      if (lowerPrompt.includes('sdg 4') || lowerPrompt.includes('education')) {
+        return 'SDG 4 - Quality Education aims to ensure inclusive and equitable quality education and promote lifelong learning opportunities for all. You can contribute by: volunteering as a tutor, supporting educational nonprofits, advocating for educational access, donating books or supplies, mentoring students, or supporting digital literacy programs.';
+      }
+      if (lowerPrompt.includes('get involved') || lowerPrompt.includes('how can i help')) {
+        return 'There are many ways to get involved with the SDGs: 1) Volunteer with local NGOs working on SDG issues, 2) Support sustainable businesses, 3) Advocate for policy changes, 4) Educate others about the SDGs, 5) Make sustainable lifestyle choices, 6) Donate to organizations working on SDG goals, 7) Participate in community projects, 8) Use your professional skills to support SDG initiatives.';
+      }
+      return 'I\'m here to help you learn about the 17 Sustainable Development Goals and find ways to make a positive impact. You can ask me about specific SDGs, how to get involved, or ways to contribute to sustainable development in your community.';
+    }
+    
+    // Market analyst responses
     if (systemPrompt.includes('market analyst')) {
       return JSON.stringify({
         shortages: ['Rice', 'Wheat', 'Pulses'],
@@ -43,11 +80,7 @@ export class BaseAI {
       ]);
     }
     
-    return JSON.stringify({
-      status: 'API unavailable',
-      message: 'Please try again later',
-      fallback: true
-    });
+    return 'I apologize, but I\'m having trouble connecting to my AI services right now. Please try again in a moment, or feel free to ask a more specific question about the topic you\'re interested in.';
   }
   
   static async callOpenRouter(prompt, systemPrompt) {
@@ -127,9 +160,17 @@ export class BaseAI {
 
   static parseJSON(response) {
     if (!response) return null;
+    
     try {
-      // Clean the response first
-      let cleanResponse = response.trim();
+      // First, decode HTML entities
+      let cleanResponse = response
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .trim();
       
       // Remove markdown code blocks
       const jsonMatch = cleanResponse.match(/```json\s*([\s\S]*?)\s*```/);
@@ -137,63 +178,26 @@ export class BaseAI {
         cleanResponse = jsonMatch[1].trim();
       }
       
-      // Fix HTML entities
-      cleanResponse = cleanResponse
-        .replace(/&quot;/g, '"')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&#39;/g, "'");
-      
-      // Try to extract JSON from the response
-      const arrayMatch = cleanResponse.match(/\[[\s\S]*\]/);
-      const objectMatch = cleanResponse.match(/\{[\s\S]*\}/);
-      
-      if (arrayMatch) {
-        return JSON.parse(arrayMatch[0]);
+      // Try parsing directly first
+      try {
+        return JSON.parse(cleanResponse);
+      } catch (directError) {
+        // If direct parsing fails, try to extract JSON
+        const arrayMatch = cleanResponse.match(/\[[\s\S]*\]/);
+        const objectMatch = cleanResponse.match(/\{[\s\S]*\}/);
+        
+        if (arrayMatch) {
+          return JSON.parse(arrayMatch[0]);
+        }
+        if (objectMatch) {
+          return JSON.parse(objectMatch[0]);
+        }
+        
+        throw directError;
       }
-      if (objectMatch) {
-        return JSON.parse(objectMatch[0]);
-      }
-      
-      // Try parsing the entire response
-      return JSON.parse(cleanResponse);
     } catch (error) {
       console.error('JSON parsing failed:', error);
-      console.error('Response was:', response);
-      
-      // Try to fix common JSON issues
-      try {
-        let fixedResponse = response
-          .replace(/```json/g, '')
-          .replace(/```/g, '')
-          .replace(/&quot;/g, '"')
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&#39;/g, "'")
-          .replace(/\n/g, ' ')
-          .replace(/\r/g, '')
-          .trim();
-          
-        // Find the first { or [ and last } or ]
-        const startIndex = Math.max(fixedResponse.indexOf('{'), fixedResponse.indexOf('['));
-        const endIndex = Math.max(fixedResponse.lastIndexOf('}'), fixedResponse.lastIndexOf(']'));
-        
-        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-          fixedResponse = fixedResponse.substring(startIndex, endIndex + 1);
-          
-          // Additional cleanup for malformed JSON
-          fixedResponse = fixedResponse
-            .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
-            .replace(/([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":'); // Quote unquoted keys
-          
-          return JSON.parse(fixedResponse);
-        }
-      } catch (secondError) {
-        console.error('Second JSON parsing attempt failed:', secondError);
-      }
-      
+      console.error('Response was:', response.substring(0, 500));
       return null;
     }
   }

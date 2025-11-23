@@ -248,6 +248,50 @@ export class FarmerAI extends BaseAI {
     };
   }
 
+  static getDefaultSoilAnalysis() {
+    return {
+      soilType: 'Loamy Soil',
+      pH: 'Neutral (pH 6.8) - Good for most crops',
+      healthScore: 75,
+      nutrients: {nitrogen: 'Medium', phosphorus: 'Medium', potassium: 'High'},
+      organicMatter: 'Medium (3.5%) - Consider adding compost',
+      improvements: ['Add organic compost', 'Regular soil testing', 'Crop rotation'],
+      fertilizers: ['NPK 19:19:19', 'Organic compost', 'Micronutrient mix'],
+      suitableCrops: [
+        {
+          name: 'Rice',
+          profitLevel: 'High Profit',
+          season: 'Kharif',
+          duration: '4-6 months',
+          investment: '20-30k per acre',
+          roi: '150-200%',
+          marketDemand: 'High',
+          riskLevel: 'Medium'
+        },
+        {
+          name: 'Wheat',
+          profitLevel: 'Stable Profit',
+          season: 'Rabi',
+          duration: '4-5 months',
+          investment: '15-25k per acre',
+          roi: '120-160%',
+          marketDemand: 'High',
+          riskLevel: 'Low'
+        },
+        {
+          name: 'Sugarcane',
+          profitLevel: 'High Profit',
+          season: 'Annual',
+          duration: '10-12 months',
+          investment: '40-60k per acre',
+          roi: '180-250%',
+          marketDemand: 'High',
+          riskLevel: 'Medium'
+        }
+      ]
+    };
+  }
+
   static getDefaultWeatherAdvice() {
     return {
       currentWeather: 'Favorable conditions for farming',
@@ -427,6 +471,85 @@ IMPORTANT: Return ONLY the JSON array, no additional text.`;
 
 
 
+
+  static getDefaultCrops() {
+    return [
+      {
+        name: 'Rice',
+        suitability: 'High',
+        season: 'Kharif',
+        expectedYield: '25-30 quintals per acre',
+        marketPrice: '₹2000-2500 per quintal',
+        profitability: '60-80% profit margin',
+        investment: '₹20000-30000 per acre',
+        duration: '4-6 months',
+        riskLevel: 'Medium',
+        nutritionValue: 'High carbohydrates, moderate protein',
+        hungerImpact: 'Staple food crop addressing caloric needs'
+      },
+      {
+        name: 'Pulses (Chickpea)',
+        suitability: 'High',
+        season: 'Rabi',
+        expectedYield: '15-20 quintals per acre',
+        marketPrice: '₹4000-6000 per quintal',
+        profitability: '80-120% profit margin',
+        investment: '₹15000-25000 per acre',
+        duration: '3-4 months',
+        riskLevel: 'Low',
+        nutritionValue: 'High protein, essential amino acids',
+        hungerImpact: 'Addresses protein malnutrition effectively'
+      }
+    ];
+  }
+
+  static getDefaultPrices() {
+    return [
+      {
+        crop: 'Rice',
+        currentPrice: '₹2200 per quintal',
+        weeklyTrend: '+5%',
+        monthlyTrend: 'Stable with seasonal variation',
+        bestMarkets: ['Local mandi', 'FCI procurement'],
+        demandForecast: 'High demand expected due to festival season',
+        sellingAdvice: 'Sell immediately after harvest for best prices',
+        nutritionDemand: 'High demand for fortified rice varieties',
+        hungerSolutionPotential: 'Critical for food security programs'
+      }
+    ];
+  }
+
+  static getDefaultBudget() {
+    return {
+      totalInvestment: '₹25000 per acre',
+      operationalCosts: {
+        seeds: '₹3000',
+        fertilizers: '₹8000',
+        labor: '₹10000',
+        irrigation: '₹4000'
+      },
+      expectedRevenue: '₹45000-55000',
+      profitMargin: '60-80%',
+      breakeven: '4-5 months',
+      riskFactors: ['Weather dependency', 'Market price fluctuation'],
+      costOptimization: ['Use organic fertilizers', 'Mechanize operations']
+    };
+  }
+
+  static getDefaultDiseaseDetection() {
+    return {
+      disease: 'Leaf spot disease',
+      confidence: '75%',
+      symptoms: ['Brown spots on leaves', 'Yellowing edges'],
+      causes: ['Fungal infection', 'High humidity'],
+      treatment: {
+        organic: ['Neem oil spray', 'Copper sulfate solution'],
+        chemical: ['Fungicide application', 'Systemic treatment']
+      },
+      prevention: ['Proper spacing', 'Good drainage', 'Crop rotation'],
+      severity: 'Medium'
+    };
+  }
 
   static getDefaultIrrigation() {
     return {

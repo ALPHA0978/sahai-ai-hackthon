@@ -51,6 +51,11 @@ const SimpleSDGPlatform = () => {
     }
   };
 
+  const handleBackToMainDashboard = () => {
+    console.log('SDG Platform: Back to main dashboard clicked');
+    navigate('/dashboard?tab=ai-tools');
+  };
+
   const renderCurrentTool = () => {
     switch (currentTool) {
       case 'dashboard':
@@ -89,13 +94,10 @@ const SimpleSDGPlatform = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {currentTool === 'dashboard' ? (
           <button
-            onClick={() => {
-              console.log('SDG Platform: Back to Sahai.ai clicked');
-              navigate(-1);
-            }}
+            onClick={handleBackToMainDashboard}
             className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
           >
-            ← Back
+            ← Back to Dashboard
           </button>
         ) : (
           <button

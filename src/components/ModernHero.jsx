@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, Zap, Shield, Users, Award, 
   TrendingUp, MapPin, CheckCircle, Globe 
@@ -10,6 +11,7 @@ import { useAuth } from '../auth';
 const ModernHero = ({ onStartScan, onNavigateToSDG, onNavigateToSchemes, userProfile }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     schemes: 'AI',
     users: 51,
@@ -139,9 +141,9 @@ const ModernHero = ({ onStartScan, onNavigateToSDG, onNavigateToSchemes, userPro
                 onClick={() => {
                   // Check if user is logged in using auth context
                   if (user) {
-                    window.location.href = '/dashboard';
+                    navigate('/dashboard');
                   } else {
-                    window.location.href = '/login';
+                    navigate('/login');
                   }
                 }}
                 className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 w-full sm:w-auto"

@@ -5,7 +5,16 @@ import ModernHeader from './components/ModernHeader';
 import ModernHero from './components/ModernHero';
 import SimpleCTASection from './components/SimpleCTASection';
 import SimpleFooter from './components/SimpleFooter';
-import SimpleSDGPlatform from './sdg/SimpleSDGPlatform';
+import AIInclusiveEducationTool from './sdg/tools/AIInclusiveEducationTool';
+import AIPovertyTool from './sdg/tools/AIPovertyTool';
+import SustainableFarmingTool from './sdg/tools/SustainableFarmingTool';
+import AIHealthcareTool from './sdg/tools/AIHealthcareTool';
+import AIGenderEqualityTool from './sdg/tools/AIGenderEqualityTool';
+import AIWaterManagementTool from './sdg/tools/AIWaterManagementTool';
+import AIJobMatchingTool from './sdg/tools/AIJobMatchingTool';
+import AIInfrastructureTool from './sdg/tools/AIInfrastructureTool';
+import SimplePersonalizedSuggestions from './sdg/pages/SimplePersonalizedSuggestions';
+import SimpleAIAssistant from './sdg/components/SimpleAIAssistant';
 import AIAnalysisPage from './pages/AIAnalysisPage';
 import SchemesPage from './pages/SchemesPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
@@ -203,7 +212,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50 relative">
       
-      {location.pathname !== '/dashboard' && <ModernHeader />}
+      {location.pathname === '/' && <ModernHeader />}
       
       <Routes>
         <Route 
@@ -231,8 +240,44 @@ function AppContent() {
           } 
         />
         <Route 
-          path="/sdg" 
-          element={<SimpleSDGPlatform />} 
+          path="/ai-education-tool" 
+          element={<AIInclusiveEducationTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-poverty-tool" 
+          element={<AIPovertyTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-farming-tool" 
+          element={<SustainableFarmingTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-healthcare-tool" 
+          element={<AIHealthcareTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-gender-tool" 
+          element={<AIGenderEqualityTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-water-tool" 
+          element={<AIWaterManagementTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-jobs-tool" 
+          element={<AIJobMatchingTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-infrastructure-tool" 
+          element={<AIInfrastructureTool onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/personalized-suggestions" 
+          element={<SimplePersonalizedSuggestions onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
+        />
+        <Route 
+          path="/ai-assistant" 
+          element={<SimpleAIAssistant onBack={() => navigate('/dashboard?tab=ai-tools')} />} 
         />
         <Route 
           path="/schemes" 
@@ -252,7 +297,7 @@ function AppContent() {
         />
       </Routes>
       
-      {location.pathname !== '/dashboard' && <SimpleFooter />}
+      {location.pathname === '/' && <SimpleFooter />}
     </div>
   );
 }

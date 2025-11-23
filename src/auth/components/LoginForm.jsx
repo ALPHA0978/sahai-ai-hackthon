@@ -19,7 +19,7 @@ const LoginForm = ({ isSignUp, onToggleMode, onClose }) => {
     try {
       const profile = await DataService.getUserProfile(user.uid);
       if (profile && profile.isComplete) {
-        navigate('/');
+        navigate('/dashboard');
       } else {
         navigate('/profile-setup');
       }

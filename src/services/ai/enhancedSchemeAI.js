@@ -38,13 +38,17 @@ If language is ${langInfo.name}, output must be 100% ${langInfo.name}.
   }
 
   static async analyzeDocument(documentText, language = 'en') {
-    const systemPrompt = `You are an expert document analyzer for Indian government schemes. Extract comprehensive user profile from any document type (Aadhaar, PAN, Income Certificate, Ration Card, etc.). Return ONLY valid JSON:
+    const systemPrompt = `You are an expert document analyzer for Indian government schemes. Extract comprehensive user profile from any document type (Aadhaar, PAN, Income Certificate, Ration Card, etc.). 
+
+IMPORTANT: Always extract STATE information - it's CRITICAL for scheme eligibility. Look for state names, state codes, or infer from district/pincode.
+
+Return ONLY valid JSON:
 {
   "name": "full name from document",
   "age": "calculated age or from DOB",
   "dateOfBirth": "YYYY-MM-DD format",
   "location": {
-    "state": "full state name",
+    "state": "MUST extract full state name (e.g., Maharashtra, Uttar Pradesh, Karnataka)",
     "district": "district name", 
     "block": "block/tehsil name",
     "village": "village/city name",
@@ -135,16 +139,17 @@ Return JSON array:
 }]`;
 
     const contextPrompt = `Search myscheme.gov.in for schemes matching:
-- State: ${userProfile.location?.state}
-- Age: ${userProfile.age}, Gender: ${userProfile.gender}
-- Income: ₹${userProfile.annualIncome} annually
-- Category: ${userProfile.category}
-- Occupation: ${userProfile.occupation}
-- Education: ${userProfile.educationLevel}
-- Land ownership: ${userProfile.landOwnership}
-- BPL Status: ${userProfile.isBPL}
+- State: ${userProfile.location?.state || 'NOT PROVIDED - CRITICAL MISSING INFO'}
+- Age: ${userProfile.age || 'Not provided'}, Gender: ${userProfile.gender || 'Not provided'}
+- Income: ₹${userProfile.annualIncome || 'Not provided'} annually
+- Category: ${userProfile.category || 'Not provided'}
+- Occupation: ${userProfile.occupation || 'Not provided'}
+- Education: ${userProfile.educationLevel || 'Not provided'}
+- Land ownership: ${userProfile.landOwnership || 'Not provided'}
+- BPL Status: ${userProfile.isBPL || 'Not provided'}
 
-Use myscheme.gov.in filters, then verify each scheme on Google for 2024 status. Calculate eligibility scores.`;
+IMPORTANT: If state is missing, mark schemes as 'partially_eligible' and mention state verification needed.
+Use myscheme.gov.in filters, then verify each scheme on Google for 2024 status. Calculate eligibility scores based on available information.`;
 
     const response = await this.callAPI(contextPrompt, systemPrompt, language);
     const schemes = this.parseJSON(response);
@@ -319,46 +324,76 @@ Keep URLs unchanged.`, systemPrompt, language);
       let score = 0;
       let eligible = 'not_eligible';
       let reason = 'Profile analysis needed';
+      let missingRequirements = [];
       
       if (userProfile) {
-        // Agriculture schemes
-        if (scheme.category === 'Agriculture' && userProfile.landOwnership === 'Yes') {
-          score += 40;
-          if (userProfile.occupation?.toLowerCase().includes('farm')) score += 30;
-          if (userProfile.annualIncome < 200000) score += 20;
-          if (userProfile.aadhaarCard) score += 10;
+        // Base eligibility checks
+        if (userProfile.aadhaarCard) score += 10;
+        if (userProfile.bankAccount) score += 10;
+        if (userProfile.location?.state) score += 15; // State is important for eligibility
+        
+        // Age-based eligibility
+        if (userProfile.age) {
+          if (userProfile.age >= 18 && userProfile.age <= 60) score += 10;
+        } else {
+          missingRequirements.push('Age verification');
         }
         
-        // Health schemes
+        // State-specific schemes
+        if (!userProfile.location?.state) {
+          missingRequirements.push('State information');
+          score -= 20; // Penalize missing state info
+        }
+        
+        // Agriculture schemes
+        if (scheme.category === 'Agriculture') {
+          if (userProfile.landOwnership === 'Yes') score += 40;
+          if (userProfile.occupation?.toLowerCase().includes('farm')) score += 30;
+          if (userProfile.annualIncome && userProfile.annualIncome < 200000) score += 20;
+        }
+        
+        // Health schemes (like Ayushman Bharat)
         if (scheme.category === 'Health') {
-          if (userProfile.isBPL || userProfile.annualIncome < 500000) score += 50;
-          if (userProfile.category !== 'General') score += 20;
-          if (userProfile.aadhaarCard) score += 20;
-          if (userProfile.familySize > 4) score += 10;
+          if (userProfile.isBPL || (userProfile.annualIncome && userProfile.annualIncome < 500000)) {
+            score += 50;
+          } else if (!userProfile.annualIncome) {
+            missingRequirements.push('Income certificate');
+          }
+          if (userProfile.category && userProfile.category !== 'General') score += 20;
+          if (userProfile.familySize && userProfile.familySize > 4) score += 10;
         }
         
         // Housing schemes
         if (scheme.category === 'Housing') {
           if (userProfile.housingType === 'Kutcha' || userProfile.housingType === 'Homeless') score += 60;
-          if (userProfile.annualIncome < 1800000) score += 30;
+          if (userProfile.annualIncome && userProfile.annualIncome < 1800000) score += 30;
           if (userProfile.gender === 'Female') score += 10;
         }
         
+        // Employment schemes
+        if (scheme.category === 'Employment') {
+          if (userProfile.employmentStatus === 'Unemployed') score += 40;
+          if (userProfile.educationLevel) score += 15;
+          if (userProfile.age && userProfile.age >= 18 && userProfile.age <= 35) score += 20;
+        }
+        
+        // Determine eligibility based on score
         if (score >= 70) {
           eligible = 'eligible';
-          reason = 'You meet most eligibility criteria for this scheme';
+          reason = `You meet most eligibility criteria for this scheme. ${userProfile.location?.state ? `Available in ${userProfile.location.state}.` : 'State verification needed.'}`;
         } else if (score >= 40) {
           eligible = 'partially_eligible';
-          reason = 'You meet some criteria. Additional documentation may be required';
+          reason = `You meet some criteria. ${missingRequirements.length > 0 ? `Missing: ${missingRequirements.join(', ')}.` : 'Additional documentation may be required.'}`;
         } else {
           eligible = 'not_eligible';
-          reason = 'Current profile does not match scheme requirements';
+          reason = `Current profile does not match scheme requirements. ${missingRequirements.length > 0 ? `Missing: ${missingRequirements.join(', ')}.` : ''}`;
         }
       }
       
-      enhanced.eligibilityScore = Math.min(score, 100);
+      enhanced.eligibilityScore = Math.max(0, Math.min(score, 100));
       enhanced.isEligible = eligible;
       enhanced.eligibilityReason = reason;
+      enhanced.missingRequirements = missingRequirements;
       
       return enhanced;
     });

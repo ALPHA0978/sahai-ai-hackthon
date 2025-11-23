@@ -91,10 +91,10 @@ const ModernHeader = () => {
               </div>
               <div>
                 <span className="font-bold text-xl text-blue-600">
-                  
+                  Sahai.ai
                 </span>
                 <div className="text-xs text-gray-500">
-                  AI + SDG Platform
+                  Your Rights Assistant
                 </div>
               </div>
             </div>

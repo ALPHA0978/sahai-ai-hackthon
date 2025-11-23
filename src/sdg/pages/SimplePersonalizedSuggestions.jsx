@@ -46,8 +46,18 @@ const SimplePersonalizedSuggestions = ({ onBack }) => {
     
     try {
       const systemPrompt = 'You are an SDG expert. Generate personalized SDG project suggestions based on user profile. Return JSON array with: [{"title": "", "description": "", "sdg": number, "timeCommitment": "", "impact": ""}]';
-      const response = await OpenRouterService.callAPI(JSON.stringify(userProfile), systemPrompt);
-      const aiSuggestions = JSON.parse(response);
+      const response = await OpenRouterService.callAPI(`Generate personalized SDG project suggestions for: ${JSON.stringify(userProfile)}`, systemPrompt);
+      let aiSuggestions;
+      try {
+        aiSuggestions = JSON.parse(response);
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', parseError);
+        throw new Error('Invalid AI response format');
+      }
+      
+      if (!Array.isArray(aiSuggestions)) {
+        throw new Error('AI response is not an array');
+      }
       
       // Format AI response for display
       const formattedSuggestions = aiSuggestions.map((suggestion, index) => ({
@@ -63,19 +73,27 @@ const SimplePersonalizedSuggestions = ({ onBack }) => {
       setSuggestions(formattedSuggestions);
     } catch (error) {
       console.error('Error generating suggestions:', error);
-      // Fallback to mock data
-      const fallbackSuggestions = [
+      // Generate fallback suggestions based on user interests
+      const fallbackSuggestions = userProfile.interests.slice(0, 3).map((interest, index) => ({
+        id: index + 1,
+        sdg: interest === 'Environment' ? 13 : interest === 'Education' ? 4 : interest === 'Healthcare' ? 3 : Math.floor(Math.random() * 17) + 1,
+        title: `${interest} Impact Project`,
+        description: `Make a difference in ${interest.toLowerCase()} through community-based initiatives that align with your skills in ${userProfile.skills.slice(0, 2).join(' and ')}.`,
+        match: Math.floor(Math.random() * 20) + 80,
+        timeCommitment: '3-8 hours/week',
+        impact: ['High', 'Medium', 'High'][index] || 'Medium'
+      }));
+      setSuggestions(fallbackSuggestions.length > 0 ? fallbackSuggestions : [
         {
           id: 1,
-          sdg: 13,
-          title: 'Climate Action Initiative',
-          description: 'Join local climate action projects based on your interests and skills.',
-          match: 90,
-          timeCommitment: '5-10 hours/week',
+          sdg: 17,
+          title: 'Community Partnership Initiative',
+          description: 'Build partnerships to strengthen community development and achieve sustainable goals.',
+          match: 85,
+          timeCommitment: '4-6 hours/week',
           impact: 'High'
         }
-      ];
-      setSuggestions(fallbackSuggestions);
+      ]);
     } finally {
       setIsAnalyzing(false);
     }
@@ -85,16 +103,7 @@ const SimplePersonalizedSuggestions = ({ onBack }) => {
     <div className="min-h-screen py-20 bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header */}
-        <div className="flex items-center mb-8">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
-          </button>
-        </div>
+
 
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 mb-4">

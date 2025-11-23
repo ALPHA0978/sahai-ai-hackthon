@@ -35,9 +35,14 @@ const SimpleAIAssistant = ({ onBack }) => {
     setIsTyping(true);
 
     try {
-      // Get AI response from OpenRouter
+      console.log('Sending message to AI:', currentInput);
       const systemPrompt = 'You are an SDG (Sustainable Development Goals) expert assistant. Provide helpful, accurate information about the 17 SDGs, sustainability projects, and ways people can get involved. Keep responses conversational and actionable.';
       const aiResponse = await OpenRouterService.callAPI(currentInput, systemPrompt);
+      console.log('AI Response received:', aiResponse);
+      
+      if (!aiResponse || aiResponse.trim() === '') {
+        throw new Error('Empty response from AI');
+      }
       
       // Clean up the response for better chat display
       const cleanedResponse = aiResponse
@@ -50,17 +55,28 @@ const SimpleAIAssistant = ({ onBack }) => {
       const botResponse = {
         id: messages.length + 2,
         type: 'bot',
-        content: cleanedResponse
+        content: cleanedResponse || 'I received your message but had trouble generating a response. Could you try rephrasing your question?'
       };
       
       setMessages(prev => [...prev, botResponse]);
     } catch (error) {
       console.error('Error getting AI response:', error);
       
+      // Provide contextual fallback responses
+      let fallbackContent = 'I apologize, but I\'m having trouble connecting right now.';
+      
+      if (currentInput.toLowerCase().includes('sdg')) {
+        fallbackContent = 'The 17 Sustainable Development Goals (SDGs) are a universal call to action to end poverty, protect the planet, and ensure peace and prosperity for all by 2030. They include goals like No Poverty, Zero Hunger, Quality Education, and Climate Action.';
+      } else if (currentInput.toLowerCase().includes('climate')) {
+        fallbackContent = 'Climate Action (SDG 13) focuses on taking urgent action to combat climate change. You can help by reducing energy consumption, supporting renewable energy, and advocating for climate policies.';
+      } else if (currentInput.toLowerCase().includes('education')) {
+        fallbackContent = 'Quality Education (SDG 4) ensures inclusive and equitable quality education for all. You can volunteer as a tutor, support educational nonprofits, or advocate for educational access in your community.';
+      }
+      
       const errorResponse = {
         id: messages.length + 2,
         type: 'bot',
-        content: 'I apologize, but I\'m having trouble connecting right now. Please try asking your question again, or contact support if the issue persists.'
+        content: fallbackContent
       };
       
       setMessages(prev => [...prev, errorResponse]);
@@ -79,16 +95,7 @@ const SimpleAIAssistant = ({ onBack }) => {
     <div className="min-h-screen py-20 bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header */}
-        <div className="flex items-center mb-8">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
-          </button>
-        </div>
+
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 mb-4">

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, MapPin, Briefcase, GraduationCap, Upload, Save } from 'lucide-react';
+import { User, MapPin, Briefcase, GraduationCap, Upload, Save, ChevronDown, FileText, CreditCard, Vote, Home as HomeIcon, Check, X } from 'lucide-react';
 import { useAuth } from '../auth';
 import { DataService } from '../services/dataService';
 import { CloudinaryService } from '../services/cloudinaryService';
@@ -11,6 +11,77 @@ const ProfileSetupPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [dropdowns, setDropdowns] = useState({});
+  const [errors, setErrors] = useState({});
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    if (user?.uid) {
+      loadExistingProfile();
+    }
+  }, [user?.uid]);
+
+  const loadExistingProfile = async () => {
+    try {
+      console.log('Loading profile for user:', user.uid);
+      const existingData = await DataService.getUserProfile(user.uid);
+      console.log('Existing profile data:', existingData);
+      
+      if (existingData) {
+        console.log('Merging existing data with default profile');
+        setProfileData(prev => ({ ...prev, ...existingData }));
+      } else {
+        console.log('No existing profile found, using defaults');
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const CustomDropdown = ({ label, value, onChange, options, placeholder, required, error }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    return (
+      <div className="relative">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left flex items-center justify-between ${
+            error ? 'border-red-300' : 'border-gray-300'
+          }`}
+        >
+          <span className={value ? 'text-gray-900' : 'text-gray-500'}>
+            {value || placeholder}
+          </span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {isOpen && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors text-gray-900"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+    );
+  };
   const [profileData, setProfileData] = useState({
     // Personal Info
     fullName: user?.displayName || '',
@@ -58,7 +129,11 @@ const ProfileSetupPage = () => {
     
     // Documents
     profilePhoto: '',
-    documents: []
+    documents: [],
+    aadhaarDocument: null,
+    panDocument: null,
+    voterIdDocument: null,
+    landDocument: null
   });
 
   const handleInputChange = (field, value) => {
@@ -84,19 +159,103 @@ const ProfileSetupPage = () => {
     }
   };
 
+  const handleDocumentUpload = async (file, documentType) => {
+    setLoading(true);
+    try {
+      const result = await CloudinaryService.uploadImage(file);
+      const documentData = {
+        url: result.secure_url,
+        name: file.name,
+        uploadedAt: new Date().toISOString()
+      };
+      
+      // Save document and automatically check the checkbox
+      handleInputChange(`${documentType}Document`, documentData);
+      
+      // Auto-check the corresponding checkbox based on document type
+      const checkboxMap = {
+        'aadhaar': 'hasAadhaar',
+        'pan': 'hasPAN', 
+        'voterId': 'hasVoterID',
+        'land': 'landOwnership'
+      };
+      
+      if (checkboxMap[documentType]) {
+        handleInputChange(checkboxMap[documentType], true);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validateStep1 = () => {
+    const newErrors = {};
+    const requiredFields = {
+      fullName: 'Full Name is required',
+      dateOfBirth: 'Date of Birth is required',
+      gender: 'Gender is required',
+      phoneNumber: 'Phone Number is required',
+      category: 'Category is required',
+      maritalStatus: 'Marital Status is required'
+    };
+
+    Object.keys(requiredFields).forEach(field => {
+      if (!profileData[field]) {
+        newErrors[field] = requiredFields[field];
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors = {};
+    const requiredFields = {
+      state: 'State is required',
+      district: 'District is required',
+      occupation: 'Occupation is required',
+      annualIncome: 'Annual Income is required',
+      educationLevel: 'Education Level is required',
+      familySize: 'Family Size is required'
+    };
+
+    Object.keys(requiredFields).forEach(field => {
+      if (!profileData[field]) {
+        newErrors[field] = requiredFields[field];
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      await DataService.saveUserProfile(user.uid, {
+      console.log('Saving profile data:', profileData);
+      console.log('User ID:', user.uid);
+      
+      const profileToSave = {
         ...profileData,
         completedAt: new Date().toISOString(),
         isComplete: true
-      });
+      };
+      
+      console.log('Profile to save:', profileToSave);
+      
+      const result = await DataService.saveUserProfile(user.uid, profileToSave);
+      console.log('Save result:', result);
       
       await DataService.logUserAction(user.uid, 'profile_completed', { profileData });
-      navigate('/');
+      console.log('Profile saved successfully, navigating to dashboard');
+      
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error saving profile:', error);
+      alert('Error saving profile. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -105,255 +264,324 @@ const ProfileSetupPage = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <User className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
+        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 mb-4">
+          <User size={14} />
+          <span className="text-sm font-medium">Step 1</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Personal Information</h2>
         <p className="text-gray-600">Help us understand your profile better</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Full Name
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="text"
             value={profileData.fullName}
             onChange={(e) => handleInputChange('fullName', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.fullName ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Enter your full name"
           />
+          {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Date of Birth
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="date"
             value={profileData.dateOfBirth}
             onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.dateOfBirth ? 'border-red-300' : 'border-gray-300'
+            }`}
           />
+          {errors.dateOfBirth && <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-          <select
-            value={profileData.gender}
-            onChange={(e) => handleInputChange('gender', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Transgender">Transgender</option>
-          </select>
-        </div>
+        <CustomDropdown
+          label="Gender"
+          value={profileData.gender}
+          onChange={(value) => handleInputChange('gender', value)}
+          placeholder="Select Gender"
+          required
+          error={errors.gender}
+          options={[
+            { value: 'Male', label: 'Male' },
+            { value: 'Female', label: 'Female' },
+            { value: 'Transgender', label: 'Transgender' }
+          ]}
+        />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Phone Number
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="tel"
             value={profileData.phoneNumber}
             onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.phoneNumber ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Enter phone number"
           />
+          {errors.phoneNumber && <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <select
-            value={profileData.category}
-            onChange={(e) => handleInputChange('category', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select Category</option>
-            <option value="General">General</option>
-            <option value="SC">SC</option>
-            <option value="ST">ST</option>
-            <option value="OBC">OBC</option>
-            <option value="EWS">EWS</option>
-          </select>
-        </div>
+        <CustomDropdown
+          label="Category"
+          value={profileData.category}
+          onChange={(value) => handleInputChange('category', value)}
+          placeholder="Select Category"
+          required
+          error={errors.category}
+          options={[
+            { value: 'General', label: 'General' },
+            { value: 'SC', label: 'SC' },
+            { value: 'ST', label: 'ST' },
+            { value: 'OBC', label: 'OBC' },
+            { value: 'EWS', label: 'EWS' }
+          ]}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Marital Status</label>
-          <select
-            value={profileData.maritalStatus}
-            onChange={(e) => handleInputChange('maritalStatus', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select Status</option>
-            <option value="Single">Single</option>
-            <option value="Married">Married</option>
-            <option value="Divorced">Divorced</option>
-            <option value="Widowed">Widowed</option>
-          </select>
-        </div>
+        <CustomDropdown
+          label="Marital Status"
+          value={profileData.maritalStatus}
+          onChange={(value) => handleInputChange('maritalStatus', value)}
+          placeholder="Select Status"
+          required
+          error={errors.maritalStatus}
+          options={[
+            { value: 'Single', label: 'Single' },
+            { value: 'Married', label: 'Married' },
+            { value: 'Divorced', label: 'Divorced' },
+            { value: 'Widowed', label: 'Widowed' }
+          ]}
+        />
       </div>
 
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-        <div className="flex items-center space-x-4">
-          {profileData.profilePhoto && (
-            <img src={profileData.profilePhoto} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], 'profile')}
-            className="hidden"
-            id="profile-upload"
-          />
-          <label
-            htmlFor="profile-upload"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center space-x-2"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Upload Photo</span>
-          </label>
-        </div>
-      </div>
+
     </div>
   );
 
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <MapPin className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900">Location & Economic Details</h2>
+        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-green-100 text-green-700 mb-4">
+          <MapPin size={14} />
+          <span className="text-sm font-medium">Step 2</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Location & Economic Details</h2>
         <p className="text-gray-600">This helps us find location-specific schemes</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            State
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="text"
             value={profileData.state}
             onChange={(e) => handleInputChange('state', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.state ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Enter your state"
           />
+          {errors.state && <p className="mt-1 text-sm text-red-600">{errors.state}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            District
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="text"
             value={profileData.district}
             onChange={(e) => handleInputChange('district', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.district ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Enter your district"
           />
+          {errors.district && <p className="mt-1 text-sm text-red-600">{errors.district}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Occupation
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="text"
             value={profileData.occupation}
             onChange={(e) => handleInputChange('occupation', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.occupation ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Enter your occupation"
           />
+          {errors.occupation && <p className="mt-1 text-sm text-red-600">{errors.occupation}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Annual Income (₹)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Annual Income (₹)
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="number"
             value={profileData.annualIncome}
             onChange={(e) => handleInputChange('annualIncome', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.annualIncome ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Enter annual income"
           />
+          {errors.annualIncome && <p className="mt-1 text-sm text-red-600">{errors.annualIncome}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Education Level</label>
-          <select
-            value={profileData.educationLevel}
-            onChange={(e) => handleInputChange('educationLevel', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select Education</option>
-            <option value="Illiterate">Illiterate</option>
-            <option value="Primary">Primary</option>
-            <option value="Secondary">Secondary</option>
-            <option value="Higher Secondary">Higher Secondary</option>
-            <option value="Graduate">Graduate</option>
-            <option value="Post Graduate">Post Graduate</option>
-          </select>
-        </div>
+        <CustomDropdown
+          label="Education Level"
+          value={profileData.educationLevel}
+          onChange={(value) => handleInputChange('educationLevel', value)}
+          placeholder="Select Education"
+          required
+          error={errors.educationLevel}
+          options={[
+            { value: 'Illiterate', label: 'Illiterate' },
+            { value: 'Primary', label: 'Primary' },
+            { value: 'Secondary', label: 'Secondary' },
+            { value: 'Higher Secondary', label: 'Higher Secondary' },
+            { value: 'Graduate', label: 'Graduate' },
+            { value: 'Post Graduate', label: 'Post Graduate' }
+          ]}
+        />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Family Size</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Family Size
+            <span className="text-red-500 ml-1">*</span>
+          </label>
           <input
             type="number"
             value={profileData.familySize}
             onChange={(e) => handleInputChange('familySize', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.familySize ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Number of family members"
           />
+          {errors.familySize && <p className="mt-1 text-sm text-red-600">{errors.familySize}</p>}
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Document Availability</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-gray-50 rounded-lg p-6 space-y-6">
+        <div className="flex items-center space-x-2">
+          <FileText className="w-5 h-5 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Document Availability</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
-            { key: 'hasAadhaar', label: 'Aadhaar Card' },
-            { key: 'hasPAN', label: 'PAN Card' },
-            { key: 'hasVoterID', label: 'Voter ID' },
-            { key: 'landOwnership', label: 'Land Ownership' }
-          ].map(({ key, label }) => (
-            <label key={key} className="flex items-center space-x-2">
+            { key: 'hasAadhaar', label: 'Aadhaar Card', icon: CreditCard, description: 'Government ID proof', docType: 'aadhaar' },
+            { key: 'hasPAN', label: 'PAN Card', icon: CreditCard, description: 'Tax identification', docType: 'pan' },
+            { key: 'hasVoterID', label: 'Voter ID', icon: Vote, description: 'Election identity card', docType: 'voterId' },
+            { key: 'landOwnership', label: 'Land Ownership', icon: HomeIcon, description: 'Property documents', docType: 'land' }
+          ].map(({ key, label, icon: Icon, description, docType }) => (
+            <div key={key}>
               <input
-                type="checkbox"
-                checked={profileData[key]}
-                onChange={(e) => handleInputChange(key, e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => e.target.files[0] && handleDocumentUpload(e.target.files[0], docType)}
+                className="hidden"
+                id={`${docType}-upload`}
               />
-              <span className="text-sm text-gray-700">{label}</span>
-            </label>
+              <label
+                htmlFor={`${docType}-upload`}
+                className="block bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={profileData[key]}
+                      onChange={(e) => handleInputChange(key, e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 pointer-events-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Icon className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-900">{label}</span>
+                      {profileData[`${docType}Document`] ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Upload className="w-4 h-4 text-blue-500" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">{description}</p>
+                    
+                    {profileData[`${docType}Document`] ? (
+                      <div className="flex items-center space-x-1 text-xs text-green-600">
+                        <Check className="w-3 h-3" />
+                        <span>Uploaded: {profileData[`${docType}Document`].name}</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-blue-600">
+                        Click to upload document
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </label>
+            </div>
           ))}
         </div>
-      </div>
 
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Upload Documents</label>
-        <input
-          type="file"
-          multiple
-          accept="image/*,.pdf"
-          onChange={(e) => Array.from(e.target.files).forEach(file => handleFileUpload(file))}
-          className="hidden"
-          id="document-upload"
-        />
-        <label
-          htmlFor="document-upload"
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 cursor-pointer flex items-center space-x-2 w-fit"
-        >
-          <Upload className="w-4 h-4" />
-          <span>Upload Documents</span>
-        </label>
-        {profileData.documents.length > 0 && (
-          <div className="mt-2 space-y-1">
-            {profileData.documents.map((doc, index) => (
-              <div key={index} className="text-sm text-gray-600">{doc.name}</div>
-            ))}
-          </div>
-        )}
+
       </div>
     </div>
   );
 
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white rounded-xl p-8 shadow-xl">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          </div>
+          <p className="text-gray-600 mt-4">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-lg p-8"
-        >
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+
+
+      <div className="py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl shadow-xl p-8 border border-gray-200"
+          >
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -381,7 +609,17 @@ const ProfileSetupPage = () => {
             </button>
 
             <button
-              onClick={() => step === 1 ? setStep(2) : handleSaveProfile()}
+              onClick={() => {
+                if (step === 1) {
+                  if (validateStep1()) {
+                    setStep(2);
+                  }
+                } else {
+                  if (validateStep2()) {
+                    handleSaveProfile();
+                  }
+                }
+              }}
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
@@ -397,6 +635,7 @@ const ProfileSetupPage = () => {
           </div>
         </motion.div>
       </div>
+    </div>
     </div>
   );
 };

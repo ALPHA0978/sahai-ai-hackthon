@@ -24,7 +24,11 @@ const ModernUploadSection = ({ onSchemesFound }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [processingStep, setProcessingStep] = useState('');
   const [error, setError] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [stream, setStream] = useState(null);
   const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const { user } = useAuth();
 
   const updateProgress = (step, percentage) => {
@@ -41,17 +45,9 @@ const ModernUploadSection = ({ onSchemesFound }) => {
     setUploadedFiles([file]);
     
     try {
-      updateProgress('Uploading document...', 10);
+      updateProgress('Processing document...', 10);
       
-      // Upload to Firebase Storage if user is logged in
-      let documentUrl = null;
-      if (user) {
-        const uploadResult = await DataService.uploadDocument(user.uid, file);
-        documentUrl = uploadResult.downloadURL;
-        updateProgress('Document uploaded securely', 20);
-      }
-
-      updateProgress('Extracting text from document...', 40);
+      updateProgress('Extracting text with OCR...', 30);
       const extractedText = await processUploadedFile(file);
       
       if (!extractedText.trim()) {
@@ -71,19 +67,7 @@ const ModernUploadSection = ({ onSchemesFound }) => {
       // Get personalized schemes based on user profile
       const schemes = await OpenRouterService.findSchemes(userProfile, currentLanguage);
       
-      updateProgress('Profile extracted successfully!', 90);
-      
-      // Log analytics
-      if (user) {
-        await DataService.logUserAction(user.uid, 'document_processed', {
-          fileType: file.type,
-          fileSize: file.size,
-          documentUrl,
-          schemesFound: schemes?.length || 0
-        });
-      }
-      
-      updateProgress('Complete!', 100);
+      updateProgress('Analysis complete!', 100);
       
       if (onSchemesFound) {
         onSchemesFound(userProfile, schemes);
@@ -92,13 +76,6 @@ const ModernUploadSection = ({ onSchemesFound }) => {
     } catch (error) {
       console.error('Processing error:', error);
       setError(error.message || 'Failed to process document');
-      
-      if (user) {
-        await DataService.logUserAction(user.uid, 'document_processing_error', {
-          error: error.message,
-          fileType: file.type
-        });
-      }
     } finally {
       setTimeout(() => {
         setIsProcessing(false);
@@ -107,14 +84,101 @@ const ModernUploadSection = ({ onSchemesFound }) => {
         setUploadedFiles([]);
       }, 2000);
     }
-  }, [onSchemesFound, user]);
+  }, [onSchemesFound, currentLanguage]);
 
   const handleVoiceInput = async () => {
     setError('Voice input feature is temporarily unavailable.');
   };
 
-  const handleTakePhoto = () => {
-    fileInputRef.current?.click();
+  const handleTakePhoto = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        setStream(mediaStream);
+        setShowCamera(true);
+        
+        // Wait for video element to be ready
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream;
+            videoRef.current.play().catch(e => console.error('Play error:', e));
+          }
+        }, 100);
+      } else {
+        // Fallback to file picker
+        fileInputRef.current?.click();
+      }
+    } catch (error) {
+      console.error('Camera access error:', error);
+      setError('Camera access denied. Using file picker instead.');
+      fileInputRef.current?.click();
+    }
+  };
+
+  const capturePhoto = async () => {
+    console.log('Capture photo clicked');
+    
+    if (!videoRef.current) {
+      console.error('Video ref not available');
+      return;
+    }
+    
+    if (!canvasRef.current) {
+      console.error('Canvas ref not available');
+      return;
+    }
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    console.log('Video dimensions:', video.videoWidth, video.videoHeight);
+    
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      console.error('Video not ready');
+      return;
+    }
+    
+    try {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      context.drawImage(video, 0, 0);
+      console.log('Image drawn to canvas');
+      
+      // Convert to blob
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          console.log('Blob created:', blob.size, 'bytes');
+          
+          // Create file-like object from blob
+          const file = Object.assign(blob, {
+            name: `document-${Date.now()}.jpg`,
+            lastModified: Date.now()
+          });
+          
+          console.log('File created:', file.name, file.size);
+          
+          closeCamera();
+          setIsProcessing(true);
+          await onDrop([file]);
+        } else {
+          console.error('Failed to create blob');
+        }
+      }, 'image/jpeg', 0.8);
+    } catch (error) {
+      console.error('Capture error:', error);
+    }
+  };
+
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setShowCamera(false);
   };
 
   const handleFileSelect = async (event) => {
@@ -146,13 +210,6 @@ const ModernUploadSection = ({ onSchemesFound }) => {
       const schemes = await OpenRouterService.findSchemes(userProfile, currentLanguage);
       
       updateProgress('Text analysis complete!', 100);
-      
-      if (user) {
-        await DataService.logUserAction(user.uid, 'text_processed', {
-          textLength: textInput.length,
-          schemesFound: schemes?.length || 0
-        });
-      }
       
       if (onSchemesFound) {
         onSchemesFound(userProfile, schemes);
@@ -306,10 +363,10 @@ const ModernUploadSection = ({ onSchemesFound }) => {
               <Camera className="w-6 h-6 text-white" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">
-              {t('takePhoto')}
+              Take Photo
             </h3>
             <p className="text-sm text-gray-600">
-              {t('takePhotoDesc')}
+              Capture documents with your camera
             </p>
           </button>
           
@@ -350,15 +407,82 @@ const ModernUploadSection = ({ onSchemesFound }) => {
           </button>
         </div>
 
-        {/* Hidden file input for camera */}
+        {/* Hidden file input for fallback */}
         <input 
           ref={fileInputRef}
           type="file" 
           accept="image/*" 
-          capture="environment"
           onChange={handleFileSelect}
           className="hidden"
         />
+
+        {/* Camera Modal */}
+        <AnimatePresence>
+          {showCamera && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="bg-white rounded-xl max-w-2xl w-full p-6 relative"
+              >
+                <button
+                  onClick={closeCamera}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Capture Document</h3>
+                  <p className="text-gray-600">Position your document in the frame and click capture</p>
+                </div>
+
+                <div className="relative bg-black rounded-lg overflow-hidden mb-4">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-64 object-cover"
+                    onLoadedMetadata={() => console.log('Video loaded')}
+                    onError={(e) => console.error('Video error:', e)}
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+                  
+                  {/* Camera overlay */}
+                  <div className="absolute inset-4 border-2 border-white border-dashed rounded-lg pointer-events-none">
+                    <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-blue-500"></div>
+                    <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-blue-500"></div>
+                    <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-blue-500"></div>
+                    <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-blue-500"></div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={capturePhoto}
+                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
+                  >
+                    <Camera className="w-5 h-5" />
+                    <span>Capture Photo</span>
+                  </button>
+                  <button
+                    onClick={closeCamera}
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Text Input Modal */}
         <AnimatePresence>
