@@ -9,17 +9,18 @@ import {
   LogOut, User, X, MapPin, Phone, CreditCard, MessageCircle, Target, Send, Loader
 } from 'lucide-react';
 import { useAuth } from '../auth';
+import { useProfile } from '../contexts/ProfileContext';
 import { DataService } from '../services/dataService';
 import { OpenRouterService } from '../services/api/openRouterService';
 
 const DashboardPage = () => {
   const { user, logout } = useAuth();
+  const { profile, loading: profileLoading, isProfileComplete, profileCompletionPercentage } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedSDG, setSelectedSDG] = useState(null);
-  const [profileData, setProfileData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [error, setError] = useState(null);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [aiMessages, setAiMessages] = useState([]);
   const [aiInput, setAiInput] = useState('');
@@ -42,29 +43,13 @@ const DashboardPage = () => {
     }
   }, [location.search]);
 
-  useEffect(() => {
-    if (user?.uid && activeTab === 'profile') {
-      loadProfileData();
-    }
-  }, [user?.uid, activeTab]);
-
-  const loadProfileData = async () => {
-    setLoadingProfile(true);
-    try {
-      const data = await DataService.getUserProfile(user.uid);
-      setProfileData(data);
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
+  // Profile data is now available through ProfileContext
 
   useEffect(() => {
     if (user?.uid) {
       calculateRealTimeStats();
     }
-  }, [user?.uid, profileData]);
+  }, [user?.uid, profile]);
   
   const [stats, setStats] = useState({
     totalSchemes: 1247,
@@ -98,12 +83,12 @@ const DashboardPage = () => {
     
     try {
       const cachedSchemes = await DataService.getCachedSchemes(user.uid) || [];
-      const userProfile = await DataService.getUserProfile(user.uid);
+      const userProfile = profile || {};
       
       // Calculate total schemes available
       let totalSchemes = 1247;
-      if (userProfile?.location?.state) totalSchemes += 35;
-      if (userProfile?.category && userProfile.category !== 'General') totalSchemes += 22;
+      if (userProfile.state) totalSchemes += 35;
+      if (userProfile.category && userProfile.category !== 'General') totalSchemes += 22;
       
       // Calculate applied schemes
       const appliedSchemes = mySchemes.filter(s => s.status === 'Applied' || s.status === 'Active').length;
@@ -115,11 +100,10 @@ const DashboardPage = () => {
       
       // Calculate success rate
       let successRate = 65;
-      if (userProfile) {
-        const fields = ['name', 'age', 'location', 'occupation', 'annualIncome', 'category'];
+      if (userProfile && Object.keys(userProfile).length > 0) {
+        const fields = ['fullName', 'age', 'state', 'occupation', 'annualIncome', 'category'];
         const completed = fields.filter(field => {
-          if (field === 'location') return userProfile.location?.state;
-          return userProfile[field];
+          return userProfile[field] && userProfile[field] !== '';
         }).length;
         successRate = Math.min(95, 65 + (completed / fields.length) * 30);
       }
@@ -140,6 +124,7 @@ const DashboardPage = () => {
       
     } catch (error) {
       console.error('Error calculating stats:', error);
+      setError('Failed to calculate dashboard statistics');
     }
   };
 
@@ -587,6 +572,27 @@ const DashboardPage = () => {
       console.error('Logout failed:', error);
     }
   };
+
+  // Error boundary fallback
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => {
+              setError(null);
+              window.location.reload();
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1322,7 +1328,7 @@ const DashboardPage = () => {
               </div>
 
               {/* Profile Details */}
-              {loadingProfile ? (
+              {profileLoading ? (
                 <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                   <div className="animate-pulse">
                     <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -1332,7 +1338,7 @@ const DashboardPage = () => {
                     </div>
                   </div>
                 </div>
-              ) : profileData ? (
+              ) : profile ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Personal Information */}
                   <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
@@ -1343,27 +1349,27 @@ const DashboardPage = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Full Name:</span>
-                        <span className="font-medium">{profileData.fullName || 'Not provided'}</span>
+                        <span className="font-medium">{profile.fullName || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Date of Birth:</span>
-                        <span className="font-medium">{profileData.dateOfBirth || 'Not provided'}</span>
+                        <span className="font-medium">{profile.dateOfBirth || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Gender:</span>
-                        <span className="font-medium">{profileData.gender || 'Not provided'}</span>
+                        <span className="font-medium">{profile.gender || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Phone:</span>
-                        <span className="font-medium">{profileData.phoneNumber || 'Not provided'}</span>
+                        <span className="font-medium">{profile.phoneNumber || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Category:</span>
-                        <span className="font-medium">{profileData.category || 'Not provided'}</span>
+                        <span className="font-medium">{profile.category || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Marital Status:</span>
-                        <span className="font-medium">{profileData.maritalStatus || 'Not provided'}</span>
+                        <span className="font-medium">{profile.maritalStatus || 'Not provided'}</span>
                       </div>
                     </div>
                   </div>
@@ -1377,27 +1383,27 @@ const DashboardPage = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-600">State:</span>
-                        <span className="font-medium">{profileData.state || 'Not provided'}</span>
+                        <span className="font-medium">{profile.state || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">District:</span>
-                        <span className="font-medium">{profileData.district || 'Not provided'}</span>
+                        <span className="font-medium">{profile.district || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Occupation:</span>
-                        <span className="font-medium">{profileData.occupation || 'Not provided'}</span>
+                        <span className="font-medium">{profile.occupation || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Annual Income:</span>
-                        <span className="font-medium">{profileData.annualIncome ? `₹${profileData.annualIncome}` : 'Not provided'}</span>
+                        <span className="font-medium">{profile.annualIncome ? `₹${profile.annualIncome}` : 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Education:</span>
-                        <span className="font-medium">{profileData.educationLevel || 'Not provided'}</span>
+                        <span className="font-medium">{profile.educationLevel || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Family Size:</span>
-                        <span className="font-medium">{profileData.familySize || 'Not provided'}</span>
+                        <span className="font-medium">{profile.familySize || 'Not provided'}</span>
                       </div>
                     </div>
                   </div>
@@ -1412,47 +1418,47 @@ const DashboardPage = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600">Aadhaar Card:</span>
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          profileData.hasAadhaar ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          profile.hasAadhaar ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {profileData.hasAadhaar ? 'Available' : 'Not Available'}
+                          {profile.hasAadhaar ? 'Available' : 'Not Available'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600">PAN Card:</span>
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          profileData.hasPAN ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          profile.hasPAN ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {profileData.hasPAN ? 'Available' : 'Not Available'}
+                          {profile.hasPAN ? 'Available' : 'Not Available'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600">Voter ID:</span>
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          profileData.hasVoterID ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          profile.hasVoterID ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {profileData.hasVoterID ? 'Available' : 'Not Available'}
+                          {profile.hasVoterID ? 'Available' : 'Not Available'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600">Land Ownership:</span>
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          profileData.landOwnership ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          profile.landOwnership ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {profileData.landOwnership ? 'Yes' : 'No'}
+                          {profile.landOwnership ? 'Yes' : 'No'}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Uploaded Documents */}
-                  {profileData.documents && profileData.documents.length > 0 && (
+                  {profile.documents && profile.documents.length > 0 && (
                     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                       <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
                         <FileText className="w-5 h-5 mr-2 text-orange-600" />
                         Uploaded Documents
                       </h4>
                       <div className="space-y-2">
-                        {profileData.documents.map((doc, index) => (
+                        {profile.documents.map((doc, index) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                             <span className="text-sm text-gray-700">{doc.name}</span>
                             <span className="text-xs text-green-600">✓ Uploaded</span>

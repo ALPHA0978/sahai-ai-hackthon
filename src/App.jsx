@@ -26,6 +26,7 @@ import { useAuth } from './auth';
 import { AuthProvider } from './auth';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ProfileProvider } from './contexts/ProfileContext';
 import { useTranslation } from 'react-i18next';
 import './styles/simple-theme.css';
 import './App.css';
@@ -308,7 +309,9 @@ function App() {
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <AppContent />
+            <ProfileProvider>
+              <AppContent />
+            </ProfileProvider>
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>

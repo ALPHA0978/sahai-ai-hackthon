@@ -1,6 +1,93 @@
 import { BaseAI } from './baseAI.js';
 import { SchemeTranslator } from '../schemeTranslator.js';
 
+class SchemeAI extends BaseAI {
+  static async findSchemes(language = 'en') {
+    try {
+      const systemPrompt = `You are a government scheme researcher with access to myscheme.gov.in and official government websites. Search for REAL active Indian government schemes and find their ACTUAL official URLs.
+
+IMPORTANT: 
+1. Search myscheme.gov.in for scheme details
+2. Find the REAL official government website for each scheme
+3. Use ONLY actual .gov.in or official government URLs
+4. Verify each URL exists and is active
+
+Return ONLY valid JSON array with REAL URLs:
+[{
+  "id": "scheme_code_2024",
+  "title": "Official Scheme Name",
+  "description": "Detailed scheme description",
+  "amount": "Benefit amount with currency",
+  "category": "Agriculture|Health|Education|Employment|Housing|Women|Financial|Energy|Water|Sanitation",
+  "level": "Central",
+  "ministry": "Implementing ministry name",
+  "eligibilityUrl": "REAL official government URL for eligibility check",
+  "applicationUrl": "REAL official government URL for application",
+  "helplineNumber": "Official helpline number",
+  "requirements": ["Required documents list"],
+  "benefits": ["List of benefits provided"],
+  "applicationProcess": ["Step by step application process"],
+  "lastUpdated": "2024-12-15",
+  "schemeStatus": "Active"
+}]`;
+
+      const prompt = `Find 10 major active Indian government schemes for 2024. Include schemes from different categories: Agriculture (PM-KISAN), Health (Ayushman Bharat), Housing (PM Awas), Employment (MGNREGA), Education (NSP), Women (PM Matru Vandana), Financial (PM Jan Dhan), Energy (PM Ujjwala). Use only official .gov.in URLs.`;
+      
+      const response = await this.callAPI(prompt, systemPrompt, language);
+      const schemes = this.parseJSON(response);
+      
+      return Array.isArray(schemes) ? schemes : null;
+    } catch (error) {
+      console.error('SchemeAI findSchemes error:', error);
+      return null;
+    }
+  }
+
+  static async searchSchemesByProfile(userProfile, language = 'en') {
+    try {
+      const systemPrompt = `You are an expert in Indian government schemes with access to myscheme.gov.in and official government websites. Find REAL schemes with their ACTUAL official URLs.
+
+IMPORTANT:
+1. Search myscheme.gov.in for active schemes
+2. Find the REAL official government website for each scheme
+3. Use ONLY actual .gov.in or official ministry URLs
+4. Verify each URL exists and is currently active
+
+Return ONLY valid JSON with REAL URLs:
+[{
+  "id": "scheme_id",
+  "title": "Scheme Name",
+  "description": "Description",
+  "amount": "Benefit amount",
+  "category": "Category",
+  "level": "Central",
+  "ministry": "Ministry",
+  "eligibilityUrl": "REAL official government URL for eligibility",
+  "applicationUrl": "REAL official government URL for application",
+  "helplineNumber": "Number",
+  "isEligible": "eligible|partially_eligible|not_eligible",
+  "eligibilityScore": 85,
+  "eligibilityReason": "Detailed eligibility explanation",
+  "requirements": ["Documents needed"],
+  "benefits": ["Benefits list"],
+  "applicationProcess": ["Steps to apply"],
+  "lastUpdated": "2024-12-15",
+  "schemeStatus": "Active"
+}]`;
+
+      const profileSummary = `User Profile: Age: ${userProfile.age || 'Not provided'}, Gender: ${userProfile.gender || 'Not provided'}, State: ${userProfile.state || 'Not provided'}, Occupation: ${userProfile.occupation || 'Not provided'}, Income: ₹${userProfile.annualIncome || 'Not provided'}, Category: ${userProfile.category || 'Not provided'}, Land: ${userProfile.landOwnership || 'Not provided'}, Education: ${userProfile.educationLevel || 'Not provided'}`;
+      
+      const response = await this.callAPI(`Find government schemes matching this profile: ${profileSummary}. Calculate eligibility and provide detailed reasoning.`, systemPrompt, language);
+      const schemes = this.parseJSON(response);
+      
+      return Array.isArray(schemes) ? schemes : null;
+    } catch (error) {
+      console.error('SchemeAI searchSchemesByProfile error:', error);
+      return null;
+    }
+  }
+}
+
 export class EnhancedSchemeAI extends BaseAI {
   static async callAPI(prompt, systemPrompt, language = 'en') {
     const languageMap = {
@@ -96,62 +183,50 @@ Return ONLY valid JSON:
   }
 
   static async _findSchemesInternal(userProfile, language = 'en') {
-    const systemPrompt = `You are a government scheme researcher. Your task:
-1. Search https://www.myscheme.gov.in/search using filters for user profile
-2. Apply filters: State=${userProfile.location?.state}, Category based on profile, Income range
-3. For each matching scheme, verify on Google if it's active in 2024
-4. Calculate eligibility based on user profile
-5. Return only verified, relevant schemes
+    // Use AI to dynamically find schemes based on user profile
+    try {
+      const aiSchemes = await SchemeAI.searchSchemesByProfile(userProfile, language);
+      if (aiSchemes && aiSchemes.length > 0) {
+        return aiSchemes;
+      }
+    } catch (error) {
+      console.error('Dynamic scheme search failed:', error);
+    }
 
-Return JSON array:
+    // Fallback to enhanced eligibility analysis
+    const systemPrompt = `You are a government scheme expert with access to myscheme.gov.in and official government websites. Search for REAL active schemes with their ACTUAL official URLs.
+
+IMPORTANT:
+1. Search myscheme.gov.in for schemes matching user profile
+2. Find the REAL official government website for each scheme
+3. Use ONLY actual .gov.in or official ministry URLs
+4. Verify each URL exists and is currently active
+
+Return ONLY valid JSON with REAL URLs:
 [{
-  "id": "scheme_code",
+  "id": "scheme_code_2024",
   "title": "Official Scheme Name",
-  "shortName": "Abbreviation",
   "description": "Detailed description",
   "amount": "Benefit amount",
-  "category": "Agriculture|Education|Health|Employment|Housing|Social Security|Women|Disability|Senior Citizen",
-  "level": "Central|State|District",
-  "ministry": "Implementing ministry",
-  "eligibilityUrl": "https://example.gov.in/eligibility (MUST be valid .gov.in URL)",
-  "applicationUrl": "https://example.gov.in/apply (MUST be valid .gov.in URL)",
-  "helplineNumber": "Contact number",
-  "isEligible": "eligible|not_eligible|partially_eligible",
-  "eligibilityScore": 0-100,
-  "eligibilityReason": "Detailed explanation",
-  "missingRequirements": ["what user needs"],
+  "category": "Agriculture|Health|Education|Employment|Housing|Women|Financial|Energy|Water",
+  "level": "Central",
+  "ministry": "Ministry name",
+  "eligibilityUrl": "REAL official government URL for eligibility",
+  "applicationUrl": "REAL official government URL for application",
+  "helplineNumber": "Official number",
+  "isEligible": "eligible|partially_eligible|not_eligible",
+  "eligibilityScore": 85,
+  "eligibilityReason": "Detailed eligibility explanation",
   "requirements": ["Required documents"],
-  "benefits": ["List of benefits"],
-  "applicationProcess": ["Steps to apply"],
-  "timeline": "processing time",
-  "renewalRequired": "true/false",
-  "targetBeneficiaries": "target group",
-  "budgetAllocation": "budget if available",
-  "successStories": "impact story",
-  "commonIssues": ["common problems"],
-  "tips": ["helpful tips"],
-  "relatedSchemes": ["related schemes"],
-  "lastUpdated": "2024-MM-DD",
-  "schemeStatus": "Active",
-  "applicationDeadline": "deadline if any",
-  "priority": "High|Medium|Low",
-  "verificationSource": "myscheme.gov.in + Google verification"
+  "benefits": ["Benefits list"],
+  "applicationProcess": ["Application steps"],
+  "lastUpdated": "2024-12-15",
+  "schemeStatus": "Active"
 }]`;
 
-    const contextPrompt = `Search myscheme.gov.in for schemes matching:
-- State: ${userProfile.location?.state || 'NOT PROVIDED - CRITICAL MISSING INFO'}
-- Age: ${userProfile.age || 'Not provided'}, Gender: ${userProfile.gender || 'Not provided'}
-- Income: ₹${userProfile.annualIncome || 'Not provided'} annually
-- Category: ${userProfile.category || 'Not provided'}
-- Occupation: ${userProfile.occupation || 'Not provided'}
-- Education: ${userProfile.educationLevel || 'Not provided'}
-- Land ownership: ${userProfile.landOwnership || 'Not provided'}
-- BPL Status: ${userProfile.isBPL || 'Not provided'}
+    const profileSummary = `Find schemes for: Age: ${userProfile.age || 'Not provided'}, Gender: ${userProfile.gender || 'Not provided'}, State: ${userProfile.state || userProfile.location?.state || 'Not provided'}, Occupation: ${userProfile.occupation || 'Not provided'}, Income: ₹${userProfile.annualIncome || 'Not provided'}, Category: ${userProfile.category || 'Not provided'}, Land: ${userProfile.landOwnership || 'Not provided'}, Education: ${userProfile.educationLevel || 'Not provided'}`;
 
-IMPORTANT: If state is missing, mark schemes as 'partially_eligible' and mention state verification needed.
-Use myscheme.gov.in filters, then verify each scheme on Google for 2024 status. Calculate eligibility scores based on available information.`;
-
-    const response = await this.callAPI(contextPrompt, systemPrompt, language);
+    const response = await this.callAPI(profileSummary, systemPrompt, language);
     const schemes = this.parseJSON(response);
     
     return Array.isArray(schemes) ? schemes : [];
@@ -223,7 +298,17 @@ Keep URLs unchanged.`, systemPrompt, language);
       console.error('Error in getPopularSchemes:', error);
     }
     
-    // Real schemes with working URLs
+    // Use AI to find schemes dynamically
+    try {
+      const aiSchemes = await SchemeAI.findSchemes(language);
+      if (aiSchemes && aiSchemes.length > 0) {
+        return await SchemeTranslator.translateSchemes(aiSchemes, language);
+      }
+    } catch (error) {
+      console.error('SchemeAI failed, using fallback:', error);
+    }
+    
+    // Fallback schemes if AI fails
     const fallbackSchemes = [
       {
         id: 'pmkisan2024',
@@ -307,6 +392,125 @@ Keep URLs unchanged.`, systemPrompt, language);
         requirements: ['Aadhaar card', 'Skill certificate', 'Bank account'],
         benefits: ['Skill training', 'Financial support', 'Market linkage'],
         applicationProcess: ['Register online', 'Skill assessment', 'Training', 'Financial support'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'nsp2024',
+        title: 'National Scholarship Portal',
+        description: 'Scholarships for students from various categories',
+        amount: '₹10,000-₹2 lakh per year',
+        category: 'Education',
+        level: 'Central',
+        ministry: 'Ministry of Education',
+        eligibilityUrl: 'https://scholarships.gov.in/',
+        applicationUrl: 'https://scholarships.gov.in/',
+        helplineNumber: '0120-6619540',
+        requirements: ['Academic certificates', 'Income certificate', 'Caste certificate'],
+        benefits: ['Financial assistance', 'Educational support'],
+        applicationProcess: ['Register on NSP', 'Fill application', 'Upload documents', 'Submit'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'pmmatru2024',
+        title: 'Pradhan Mantri Matru Vandana Yojana',
+        description: 'Maternity benefit for pregnant and lactating mothers',
+        amount: '₹5,000 in three installments',
+        category: 'Women',
+        level: 'Central',
+        ministry: 'Ministry of Women & Child Development',
+        eligibilityUrl: 'https://wcd.nic.in/',
+        applicationUrl: 'https://wcd.nic.in/',
+        helplineNumber: '104',
+        requirements: ['Pregnancy certificate', 'Aadhaar card', 'Bank account'],
+        benefits: ['Cash assistance', 'Nutritional support'],
+        applicationProcess: ['Register at AWC', 'Medical checkup', 'Documentation', 'Payment'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'sukanya2024',
+        title: 'Sukanya Samriddhi Yojana',
+        description: 'Savings scheme for girl child education and marriage',
+        amount: 'Up to ₹1.5 lakh per year',
+        category: 'Women',
+        level: 'Central',
+        ministry: 'Ministry of Finance',
+        eligibilityUrl: 'https://www.nsiindia.gov.in/',
+        applicationUrl: 'https://www.nsiindia.gov.in/',
+        helplineNumber: '1800-266-6868',
+        requirements: ['Girl child birth certificate', 'Parent ID', 'Address proof'],
+        benefits: ['Tax benefits', 'High interest rate', 'Compounding'],
+        applicationProcess: ['Open account', 'Deposit annually', 'Maturity at 21'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'pmjdy2024',
+        title: 'Pradhan Mantri Jan Dhan Yojana',
+        description: 'Financial inclusion through bank accounts',
+        amount: '₹2 lakh accident insurance',
+        category: 'Financial',
+        level: 'Central',
+        ministry: 'Ministry of Finance',
+        eligibilityUrl: 'https://www.pmjdy.gov.in/',
+        applicationUrl: 'https://www.pmjdy.gov.in/',
+        helplineNumber: '1800-11-0001',
+        requirements: ['Identity proof', 'Address proof'],
+        benefits: ['Zero balance account', 'RuPay debit card', 'Insurance'],
+        applicationProcess: ['Visit bank', 'Fill form', 'Submit documents', 'Account opening'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'ujjwala2024',
+        title: 'Pradhan Mantri Ujjwala Yojana',
+        description: 'Free LPG connections to BPL families',
+        amount: '₹1,600 per connection',
+        category: 'Energy',
+        level: 'Central',
+        ministry: 'Ministry of Petroleum & Natural Gas',
+        eligibilityUrl: 'https://www.pmujjwalayojana.com/',
+        applicationUrl: 'https://www.pmujjwalayojana.com/',
+        helplineNumber: '1906',
+        requirements: ['BPL status', 'Adult woman member', 'No existing LPG connection'],
+        benefits: ['Free LPG connection', 'Deposit-free cylinder', 'EMI facility'],
+        applicationProcess: ['Apply at distributor', 'Document verification', 'Connection installation'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'jaljeevan2024',
+        title: 'Jal Jeevan Mission',
+        description: 'Piped water supply to every rural household',
+        amount: 'Infrastructure development',
+        category: 'Water',
+        level: 'Central',
+        ministry: 'Ministry of Jal Shakti',
+        eligibilityUrl: 'https://jaljeevanmission.gov.in/',
+        applicationUrl: 'https://jaljeevanmission.gov.in/',
+        helplineNumber: '1800-11-0016',
+        requirements: ['Rural household', 'Village water committee'],
+        benefits: ['Tap water connection', 'Quality water supply'],
+        applicationProcess: ['Village planning', 'Infrastructure development', 'Connection provision'],
+        lastUpdated: '2024-12-15',
+        schemeStatus: 'Active'
+      },
+      {
+        id: 'swachh2024',
+        title: 'Swachh Bharat Mission',
+        description: 'Sanitation and cleanliness program',
+        amount: '₹12,000 toilet construction',
+        category: 'Sanitation',
+        level: 'Central',
+        ministry: 'Ministry of Jal Shakti',
+        eligibilityUrl: 'https://swachhbharatmission.gov.in/',
+        applicationUrl: 'https://swachhbharatmission.gov.in/',
+        helplineNumber: '1800-11-0001',
+        requirements: ['No existing toilet', 'Rural/urban household'],
+        benefits: ['Toilet construction', 'Sanitation facilities'],
+        applicationProcess: ['Apply online/offline', 'Verification', 'Construction', 'Completion certificate'],
         lastUpdated: '2024-12-15',
         schemeStatus: 'Active'
       }

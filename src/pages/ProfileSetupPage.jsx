@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, MapPin, Briefcase, GraduationCap, Upload, Save, ChevronDown, FileText, CreditCard, Vote, Home as HomeIcon, Check, X } from 'lucide-react';
 import { useAuth } from '../auth';
+import { useProfile } from '../contexts/ProfileContext';
 import { DataService } from '../services/dataService';
 import { CloudinaryService } from '../services/cloudinaryService';
 
 const ProfileSetupPage = () => {
   const { user } = useAuth();
+  const { profile, updateProfile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -16,29 +18,12 @@ const ProfileSetupPage = () => {
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
-    if (user?.uid) {
-      loadExistingProfile();
+    if (profile) {
+      console.log('Loading existing profile from context:', profile);
+      setProfileData(prev => ({ ...prev, ...profile }));
     }
-  }, [user?.uid]);
-
-  const loadExistingProfile = async () => {
-    try {
-      console.log('Loading profile for user:', user.uid);
-      const existingData = await DataService.getUserProfile(user.uid);
-      console.log('Existing profile data:', existingData);
-      
-      if (existingData) {
-        console.log('Merging existing data with default profile');
-        setProfileData(prev => ({ ...prev, ...existingData }));
-      } else {
-        console.log('No existing profile found, using defaults');
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
+    setLoadingProfile(false);
+  }, [profile]);
 
   const CustomDropdown = ({ label, value, onChange, options, placeholder, required, error }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -236,7 +221,6 @@ const ProfileSetupPage = () => {
     setLoading(true);
     try {
       console.log('Saving profile data:', profileData);
-      console.log('User ID:', user.uid);
       
       const profileToSave = {
         ...profileData,
@@ -246,13 +230,15 @@ const ProfileSetupPage = () => {
       
       console.log('Profile to save:', profileToSave);
       
-      const result = await DataService.saveUserProfile(user.uid, profileToSave);
-      console.log('Save result:', result);
+      const success = await updateProfile(profileToSave);
       
-      await DataService.logUserAction(user.uid, 'profile_completed', { profileData });
-      console.log('Profile saved successfully, navigating to dashboard');
-      
-      navigate('/dashboard');
+      if (success) {
+        await DataService.logUserAction(user.uid, 'profile_completed', { profileData });
+        console.log('Profile saved successfully, navigating to dashboard');
+        navigate('/dashboard');
+      } else {
+        alert('Error saving profile. Please try again.');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Error saving profile. Please try again.');

@@ -2,44 +2,29 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Edit, Save, X } from 'lucide-react';
 import { useAuth } from '../auth';
+import { useProfile } from '../contexts/ProfileContext';
 import { DataService } from '../services/dataService';
 
 const UserProfile = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { profile, updateProfile, loading } = useProfile();
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({});
 
   useEffect(() => {
-    if (isOpen && user) {
-      loadProfile();
+    if (profile) {
+      setEditData(profile);
     }
-  }, [isOpen, user]);
-
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      const profileData = await DataService.getUserProfile(user.uid);
-      setProfile(profileData);
-      setEditData(profileData || {});
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [profile]);
 
   const handleSave = async () => {
     try {
-      setLoading(true);
-      await DataService.saveUserProfile(user.uid, editData);
-      setProfile(editData);
-      setEditing(false);
+      const success = await updateProfile(editData);
+      if (success) {
+        setEditing(false);
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
