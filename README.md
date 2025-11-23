@@ -2,6 +2,8 @@
 
 **Your Rights, In Your Language, In Seconds**
 
+🌐 **Live Demo**: [https://sahai-ai.web.app](https://sahai-ai.web.app)
+
 Sahai.ai is India's most comprehensive AI-powered platform that combines government scheme discovery with UN Sustainable Development Goals (SDG) tools. The platform helps Indian citizens discover government schemes they're eligible for through intelligent document analysis, multi-modal AI processing, and provides 17 specialized AI tools aligned with UN SDGs for holistic citizen empowerment.
 
 ## 🌟 Complete Feature Overview
@@ -593,6 +595,7 @@ This project is proprietary software:
 ## 📞 Support & Contact
 
 ### **Support Channels**
+- **Live Platform**: [https://sahai-ai.web.app](https://sahai-ai.web.app)
 - **Email**: support@sahai.ai
 - **Documentation**: [Project Wiki](https://github.com/your-username/sahai-ai/wiki)
 - **Issues**: [GitHub Issues](https://github.com/your-username/sahai-ai/issues)
