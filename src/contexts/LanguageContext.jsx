@@ -467,7 +467,23 @@ const translations = {
     heroDescription: "તમારા દસ્તાવેજોનું વિશ્લેષણ કરતું, તમારી જરૂરિયાતો સમજતું, છુપાયેલા ફાયદા શોધતું અને વ્યક્તિગત ભલામણો આપતું અદ્યતન AI પ્લેટફોર્મ.",
     startAnalysis: "AI વિશ્લેષણ શરૂ કરો",
     exploreTools: "AI ટૂલ્સ અન્વેષણ કરો",
-    trustedUsers: "50,000+ વપરાશકર્તાઓનો વિશ્વાસ"
+    trustedUsers: "50,000+ વપરાશકર્તાઓનો વિશ્વાસ",
+    smartDocumentAI: "સ્માર્ટ દસ્તાવેજ AI",
+    personalizedInsights: "વ્યક્તિગત અંતર્દૃષ્ટિ",
+    voiceTextAI: "અવાજ અને ટેક્સ્ટ AI",
+    endToEndGuidance: "સંપૂર્ણ માર્ગદર્શન",
+    schemes: "યોજનાઓ",
+    users: "વપરાશકર્તાઓ",
+    languages: "ભાષાઓ",
+    successRate: "સફળતા દર",
+    eligible: "પાત્ર",
+    notEligible: "અપાત્ર",
+    viewDetails: "વિગતો જુઓ",
+    applyNow: "હવે અરજી કરો",
+    madeWithLove: "ભારત માટે સમર્પણ સાથે બનાવેલ",
+    privacyPolicy: "ગોપનીયતા નીતિ",
+    termsOfService: "સેવાની શરતો",
+    contactUs: "અમારો સંપર્ક કરો"
   },
   
   KN: {
@@ -493,7 +509,23 @@ const translations = {
     heroDescription: "നിങ്ങളുടെ രേഖകൾ വിശകലനം ചെയ്യുന്ന, നിങ്ങളുടെ ആവശ്യങ്ങൾ മനസ്സിലാക്കുന്ന, മറഞ്ഞിരിക്കുന്ന ആനുകൂല്യങ്ങൾ കണ്ടെത്തുന്ന, വ്യക്തിഗത ശുപാർശകൾ നൽകുന്ന വിപുലമായ AI പ്ലാറ്റ്ഫോം.",
     startAnalysis: "AI വിശകലനം ആരംഭിക്കുക",
     exploreTools: "AI ടൂളുകൾ പര്യവേക്ഷണം ചെയ്യുക",
-    trustedUsers: "50,000+ ഉപയോക്താക്കളുടെ വിശ്വാസം"
+    trustedUsers: "50,000+ ഉപയോക്താക്കളുടെ വിശ്വാസം",
+    smartDocumentAI: "സ്മാർട്ട് ഡോക്യുമെന്റ് AI",
+    personalizedInsights: "വ്യക്തിഗത ഉൾക്കാഴ്ചകൾ",
+    voiceTextAI: "ശബ്ദവും വാചകവും AI",
+    endToEndGuidance: "സമ്പൂർണ്ണ മാർഗനിർദ്ദേശം",
+    schemes: "പദ്ധതികൾ",
+    users: "ഉപയോക്താക്കൾ",
+    languages: "ഭാഷകൾ",
+    successRate: "വിജയ നിരക്ക്",
+    eligible: "യോഗ്യൻ",
+    notEligible: "അയോഗ്യൻ",
+    viewDetails: "വിശദാംശങ്ങൾ കാണുക",
+    applyNow: "ഇപ്പോൾ അപേക്ഷിക്കുക",
+    madeWithLove: "ഇന്ത്യയ്ക്കായി സമർപ്പണത്തോടെ നിർമ്മിച്ചത്",
+    privacyPolicy: "സ്വകാര്യത നയം",
+    termsOfService: "സേവന നിബന്ധനകൾ",
+    contactUs: "ഞങ്ങളെ ബന്ധപ്പെടുക"
   },
   
   PA: {

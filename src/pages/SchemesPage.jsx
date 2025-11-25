@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Filter, Search, Award, CheckCircle, IndianRupee, Building, Calendar, ExternalLink, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { OpenRouterServiceExtended } from '../services/mySchemeService';
+import { OpenRouterService } from '../services/api/openRouterService';
 
 const SchemesPage = () => {
   const [schemes, setSchemes] = useState([]);
@@ -31,7 +31,8 @@ const SchemesPage = () => {
   const loadSchemes = async () => {
     try {
       setLoading(true);
-      const data = await OpenRouterServiceExtended.getAllGovernmentSchemes();
+      // Use OpenRouterService to get popular schemes as fallback
+      const data = await OpenRouterService.getPopularSchemes('en');
       setSchemes(data || []);
     } catch (error) {
       console.error('Error loading schemes:', error);
