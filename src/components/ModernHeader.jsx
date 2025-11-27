@@ -9,7 +9,7 @@ import { LoginPage } from '../auth';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { DataService } from '../services/dataService';
-import UserProfile from './UserProfile';
+
 
 const ModernHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -17,7 +17,7 @@ const ModernHeader = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
+
   const [notifications, setNotifications] = useState([]);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -52,7 +52,7 @@ const ModernHeader = () => {
   };
 
   const languages = [
-    { code: 'EN', name: '' },
+    { code: 'EN', name: 'English' },
     { code: 'HI', name: 'हिंदी' },
     { code: 'BN', name: 'বাংলা' },
     { code: 'TE', name: 'తెలుగు' },
@@ -194,7 +194,7 @@ const ModernHeader = () => {
                         <div className="p-2">
                           <button 
                             onClick={() => {
-                              setShowProfile(true);
+                              window.location.href = '/profile-setup';
                               setShowUserMenu(false);
                             }}
                             className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
@@ -350,11 +350,7 @@ const ModernHeader = () => {
         onClose={() => setShowLoginPage(false)}
       />
 
-      {/* Profile Modal */}
-      <UserProfile 
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-      />
+
 
       {/* Click outside to close menus */}
       {(showUserMenu || showMobileMenu || showLanguageMenu) && (

@@ -24,9 +24,9 @@ export class AlphaVantageService {
     }
   }
 
-  static async getMarketNews(tickers = '') {
+  static async getMarketNews(tickers = '', limit = 10) {
     try {
-      const response = await fetch(`${ALPHA_VANTAGE_API_URL}?function=NEWS_SENTIMENT&tickers=${tickers}&limit=10&apikey=${API_KEY}`);
+      const response = await fetch(`${ALPHA_VANTAGE_API_URL}?function=NEWS_SENTIMENT&tickers=${tickers}&limit=${limit}&apikey=${API_KEY}`);
       const data = await response.json();
       return data;
     } catch (error) {
@@ -37,11 +37,9 @@ export class AlphaVantageService {
 
   static async analyzeMarketTrends(cropSymbols) {
     try {
-      // Get market data for agricultural commodities
       const marketData = await this.getTopGainersLosers();
       const newsData = await this.getMarketNews('CORN,SOYB,WEAT');
       
-      // Analyze trends
       const trends = {
         supplyShortages: [],
         priceRising: [],
@@ -90,7 +88,6 @@ export class AlphaVantageService {
       const projections = [];
       
       for (const crop of crops.slice(0, 3)) {
-        // Map crop names to commodity symbols
         const symbol = this.mapCropToSymbol(crop);
         const priceData = await this.getCommodityPrice(symbol);
         
@@ -117,9 +114,9 @@ export class AlphaVantageService {
 
   static mapCropToSymbol(crop) {
     const mapping = {
-      'Turmeric': 'CORN', // Proxy for spices
-      'Coriander': 'SOYB', // Proxy for seeds
-      'Chili': 'WEAT', // Proxy for cash crops
+      'Turmeric': 'CORN',
+      'Coriander': 'SOYB',
+      'Chili': 'WEAT',
       'Millets': 'CORN',
       'Pulses': 'SOYB',
       'Wheat': 'WEAT',

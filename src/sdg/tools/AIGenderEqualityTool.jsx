@@ -71,9 +71,27 @@ const AIGenderEqualityTool = ({ onBack }) => {
     
     setIsAnalyzing(true);
     try {
-      const { GenderEqualityAI } = await import('../../services/ai/genderEqualityAI.js');
-      const results = await GenderEqualityAI.processReport(reportData);
-      setReportResults(results);
+      // Use OpenRouterService for report processing
+      const systemPrompt = 'You are a support specialist. Process this report and return JSON with: {"reportId": "", "urgencyLevel": "", "category": "", "recommendations": {"immediateActions": [], "supportResources": [], "safetyMeasures": []}, "followUpNeeded": boolean}';
+      const response = await OpenRouterService.callAPI(`Process this ${reportData.type} report: ${reportData.description}. Location: ${reportData.location}. Urgency: ${reportData.urgency}`, systemPrompt);
+      
+      try {
+        const results = JSON.parse(response);
+        results.reportId = results.reportId || 'RPT' + Date.now();
+        setReportResults(results);
+      } catch (parseError) {
+        setReportResults({
+          reportId: 'RPT' + Date.now(),
+          urgencyLevel: reportData.urgency,
+          category: reportData.type || 'general',
+          recommendations: {
+            immediateActions: ['Document the incident', 'Seek support'],
+            supportResources: ['National Women Helpline: 181', 'Local NGO support'],
+            safetyMeasures: ['Trust your instincts', 'Inform trusted contacts']
+          },
+          followUpNeeded: true
+        });
+      }
     } catch (error) {
       console.error('Report processing error:', error);
       setReportResults({

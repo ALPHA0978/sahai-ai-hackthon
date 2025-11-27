@@ -1,5 +1,5 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -162,7 +162,7 @@ export class BaseAI {
     if (!response) return null;
     
     try {
-      // First, decode HTML entities
+      // First, decode HTML entities more comprehensively
       let cleanResponse = response
         .replace(/&quot;/g, '"')
         .replace(/&amp;/g, '&')
@@ -170,6 +170,11 @@ export class BaseAI {
         .replace(/&gt;/g, '>')
         .replace(/&#39;/g, "'")
         .replace(/&nbsp;/g, ' ')
+        .replace(/&apos;/g, "'")
+        .replace(/&ldquo;/g, '"')
+        .replace(/&rdquo;/g, '"')
+        .replace(/&lsquo;/g, "'")
+        .replace(/&rsquo;/g, "'")
         .trim();
       
       // Remove markdown code blocks
@@ -237,6 +242,63 @@ export class BaseAI {
         priceRising: ['Organic crops'],
         nutritionNeeds: ['Protein', 'Iron']
       };
+    }
+    
+    // Default fallback for scheme finding
+    if (systemPrompt.includes('scheme') || systemPrompt.includes('government')) {
+      return JSON.stringify([
+        {
+          id: 'pmkisan2024',
+          title: 'PM-KISAN Samman Nidhi Yojana',
+          description: 'Direct income support of ₹6,000 per year to farmers',
+          amount: '₹6,000 per year',
+          category: 'Agriculture',
+          level: 'Central',
+          ministry: 'Ministry of Agriculture & Farmers Welfare',
+          eligibilityUrl: 'https://pmkisan.gov.in/',
+          applicationUrl: 'https://pmkisan.gov.in/',
+          helplineNumber: '155261',
+          requirements: ['Aadhaar card', 'Bank account', 'Land documents'],
+          benefits: ['Direct cash transfer', 'No intermediaries'],
+          applicationProcess: ['Visit PM-KISAN portal', 'Enter Aadhaar', 'Submit application'],
+          lastUpdated: '2024-12-15',
+          schemeStatus: 'Active'
+        },
+        {
+          id: 'ayushman2024',
+          title: 'Ayushman Bharat PM-JAY',
+          description: 'Health insurance coverage of ₹5 lakh per family per year',
+          amount: '₹5 lakh per family per year',
+          category: 'Health',
+          level: 'Central',
+          ministry: 'Ministry of Health & Family Welfare',
+          eligibilityUrl: 'https://pmjay.gov.in/',
+          applicationUrl: 'https://pmjay.gov.in/',
+          helplineNumber: '14555',
+          requirements: ['SECC-2011 inclusion', 'Aadhaar card'],
+          benefits: ['Cashless treatment', '1,900+ medical packages'],
+          applicationProcess: ['Check eligibility', 'Visit CSC', 'Generate e-card'],
+          lastUpdated: '2024-12-15',
+          schemeStatus: 'Active'
+        },
+        {
+          id: 'pmay2024',
+          title: 'Pradhan Mantri Awas Yojana',
+          description: 'Housing subsidy for economically weaker sections',
+          amount: 'Up to ₹2.67 lakh subsidy',
+          category: 'Housing',
+          level: 'Central',
+          ministry: 'Ministry of Housing & Urban Affairs',
+          eligibilityUrl: 'https://pmaymis.gov.in/',
+          applicationUrl: 'https://pmaymis.gov.in/',
+          helplineNumber: '1800-11-6446',
+          requirements: ['Income certificate', 'Property documents', 'Aadhaar card'],
+          benefits: ['Interest subsidy', 'Direct assistance'],
+          applicationProcess: ['Online application', 'Document upload', 'Verification'],
+          lastUpdated: '2024-12-15',
+          schemeStatus: 'Active'
+        }
+      ]);
     }
     
     // Default fallback

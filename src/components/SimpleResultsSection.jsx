@@ -1,11 +1,17 @@
 import { ExternalLink, MapPin, IndianRupee, Award, CheckCircle, XCircle, X, FileText, User, Calendar, Phone } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
+const SimpleResultsSection = ({ userProfile: propUserProfile, schemes = [], isLoading }) => {
   const { t } = useLanguage();
+  const { profile: contextProfile, hasDocument } = useUserProfile();
   const [selectedScheme, setSelectedScheme] = useState(null);
+  
+  // Use profile from context if available, otherwise use prop
+  const userProfile = contextProfile || propUserProfile;
+  
   console.log('SimpleResultsSection render:', { schemes: schemes?.length, isLoading });
   
   // Only show the section if we have user profile data and schemes, or if we're loading
@@ -290,19 +296,19 @@ const SimpleResultsSection = ({ userProfile, schemes = [], isLoading }) => {
                       'Bank Account Details',
                       'Residence Proof'
                     ]).map((req, index) => {
-                      const hasDocument = userProfile && (
-                        (req.toLowerCase().includes('aadhaar') && userProfile.aadhaarCard) ||
-                        (req.toLowerCase().includes('pan') && userProfile.panCard) ||
-                        (req.toLowerCase().includes('bank') && userProfile.bankAccount) ||
-                        (req.toLowerCase().includes('voter') && userProfile.voterID)
+                      const hasDoc = userProfile && (
+                        (req.toLowerCase().includes('aadhaar') && hasDocument('aadhaar')) ||
+                        (req.toLowerCase().includes('pan') && hasDocument('pan')) ||
+                        (req.toLowerCase().includes('bank') && hasDocument('bank')) ||
+                        (req.toLowerCase().includes('voter') && hasDocument('voter'))
                       );
                       
                       return (
                         <div key={index} className={`flex items-center justify-between p-2 rounded border ${
-                          hasDocument ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                          hasDoc ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
                         }`}>
                           <span className="text-sm">{req}</span>
-                          {hasDocument ? (
+                          {hasDoc ? (
                             <CheckCircle className="w-4 h-4 text-green-600" />
                           ) : (
                             <XCircle className="w-4 h-4 text-red-600" />

@@ -26,7 +26,8 @@ import { useAuth } from './auth';
 import { AuthProvider } from './auth';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-import { useTranslation } from 'react-i18next';
+import { ProfileProvider } from './contexts/ProfileContext';
+
 import './styles/simple-theme.css';
 import './App.css';
 
@@ -53,8 +54,7 @@ function AppContent() {
   const [showWelcome, setShowWelcome] = useState(false);
   const isInitialLoadRef = useRef(false);
   const { user } = useAuth();
-  const { i18n } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -66,12 +66,7 @@ function AppContent() {
     }
   }, [showWelcome]);
 
-  useEffect(() => {
-    if (i18n.language !== currentLanguage && isInitialLoadRef.current) {
-      setCurrentLanguage(i18n.language);
-      loadInitialData();
-    }
-  }, [i18n.language]);
+
 
   useEffect(() => {
     if (user) {
@@ -90,7 +85,7 @@ function AppContent() {
     
     try {
       
-      const langCode = i18n.language?.toLowerCase() || 'en';
+      const langCode = currentLanguage?.toLowerCase() || 'en';
       console.log('Loading schemes in language:', langCode);
       const popularSchemes = await OpenRouterService.getPopularSchemes(langCode);
       console.log('Popular schemes received:', popularSchemes?.length || 0, 'schemes');
@@ -147,7 +142,7 @@ function AppContent() {
      
       if (!schemesToUse) {
         console.log('🔍 Finding schemes for profile:', profile);
-        const langCode = i18n.language?.toLowerCase() || 'en';
+        const langCode = currentLanguage?.toLowerCase() || 'en';
         schemesToUse = await OpenRouterService.findSchemes(profile, langCode);
         console.log('✅ AI returned schemes:', schemesToUse?.length || 0, 'schemes');
        
@@ -308,7 +303,9 @@ function App() {
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <AppContent />
+            <ProfileProvider>
+              <AppContent />
+            </ProfileProvider>
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>
